@@ -1,21 +1,20 @@
 package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
-import android.util.Log;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
-
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.shuyu.gsyvideoplayer.GSYVideoManager;
-import com.shuyu.gsyvideoplayer.builder.GSYVideoOptionBuilder;
-import com.shuyu.gsyvideoplayer.listener.GSYSampleCallBack;
-import com.shuyu.gsyvideoplayer.utils.OrientationUtils;
-import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer;
+import com.google.android.exoplayer2.upstream.DataSource;
+import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
+
+import io.flutter.Log;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -28,16 +27,16 @@ public class VideoView implements PlatformView, MethodCallHandler {
     private final MethodChannel methodChannel;
     private final QueuingEventSink eventSink;
     private final EventChannel eventChannel;
-    private final Registrar registrar;
 
     private final PlayerView videoView;
+    private ExoPlayer videoPlayer;
+    private Context context;
 
     VideoView(Context context, int id, Object args, Registrar registrar) {
         /**
          * Init channels
          * */
         eventSink = new QueuingEventSink();
-        this.registrar = registrar;
         eventChannel = new EventChannel(registrar.messenger(), "refined_video_player/event_" + id);
         eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
             @Override
@@ -55,6 +54,7 @@ public class VideoView implements PlatformView, MethodCallHandler {
         /**
          * Init view
          */
+        this.context = context;
         videoView = (PlayerView) LayoutInflater.from(registrar.activity()).inflate(R.layout.video_view, null);
     }
 
@@ -65,13 +65,24 @@ public class VideoView implements PlatformView, MethodCallHandler {
 
     @Override
     public void dispose() {
+        Log.i("FUCKKKKKKKKKKK", "RRRRRREEEEEEEELLLLLEEEEEAAAASSSSSEEEEEE");
+//        videoPlayer.release();
     }
 
     /**
-     * Init GSYPlayer
+     * Init ExoPlayer
      */
     private void initPlayer(String url) {
-        player = ExoPlayer.Builder();
+        videoPlayer = new SimpleExoPlayer.Builder(context).build();
+        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(
+                context,
+                Util.getUserAgent(context, "RefinedVideoPlayer")
+        );
+        MediaSource videoSource = new ProgressiveMediaSource
+                .Factory(dataSourceFactory)
+                .createMediaSource(Uri.parse(url));
+        videoPlayer.prepare(videoSource);
+        videoView.setPlayer(videoPlayer);
     }
 
     @Override
@@ -83,12 +94,15 @@ public class VideoView implements PlatformView, MethodCallHandler {
                 result.success(null);
                 break;
             case "play":
+                videoPlayer.setPlayWhenReady(true);
                 result.success(null);
                 break;
             case "pause":
+                videoPlayer.setPlayWhenReady(false);
                 result.success(null);
                 break;
             case "stop":
+                videoPlayer.stop();
                 result.success(null);
                 break;
         }

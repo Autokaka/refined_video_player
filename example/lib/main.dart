@@ -34,6 +34,11 @@ class _MyAppState extends State<MyApp> {
         body: RefinedVideoPlayer(
           controller: playerCtrl,
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            playerCtrl.toggleFullScreen();
+          },
+        ),
       ),
     );
   }
