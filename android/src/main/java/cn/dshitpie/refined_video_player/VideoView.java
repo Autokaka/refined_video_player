@@ -1,47 +1,43 @@
 package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
-import android.net.Uri;
-import android.os.Build;
-import android.view.Surface;
-import android.view.TextureView;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 
-import androidx.annotation.RequiresApi;
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.ExoPlayerFactory;
+import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.shuyu.gsyvideoplayer.GSYVideoManager;
+import com.shuyu.gsyvideoplayer.builder.GSYVideoOptionBuilder;
+import com.shuyu.gsyvideoplayer.listener.GSYSampleCallBack;
+import com.shuyu.gsyvideoplayer.utils.OrientationUtils;
+import com.shuyu.gsyvideoplayer.video.StandardGSYVideoPlayer;
 
-import org.videolan.libvlc.AWindow;
-import org.videolan.libvlc.LibVLC;
-import org.videolan.libvlc.Media;
-import org.videolan.libvlc.MediaPlayer;
-
-import java.util.ArrayList;
-
-import io.flutter.Log;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.platform.PlatformView;
-import io.flutter.view.TextureRegistry.*;
 
 import static io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 
 public class VideoView implements PlatformView, MethodCallHandler {
-    final private MethodChannel methodChannel;
-    final private QueuingEventSink eventSink;
-    final private EventChannel eventChannel;
+    private final MethodChannel methodChannel;
+    private final QueuingEventSink eventSink;
+    private final EventChannel eventChannel;
+    private final Registrar registrar;
 
-    final private TextureView textureView;
-    final private Context context;
-    private LibVLC libVLC;
-    private MediaPlayer mediaPlayer;
+    private final PlayerView videoView;
 
     VideoView(Context context, int id, Object args, Registrar registrar) {
         /**
          * Init channels
          * */
         eventSink = new QueuingEventSink();
+        this.registrar = registrar;
         eventChannel = new EventChannel(registrar.messenger(), "refined_video_player/event_" + id);
         eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
             @Override
@@ -57,62 +53,25 @@ public class VideoView implements PlatformView, MethodCallHandler {
         methodChannel = new MethodChannel(registrar.messenger(), "refined_video_player/method_" + id);
         methodChannel.setMethodCallHandler(this);
         /**
-         * Init textures
-         * */
-        this.context = context;
-        final SurfaceTextureEntry textureEntry = registrar.textures().createSurfaceTexture();
-        textureView = new TextureView(context);
-        textureView.setSurfaceTexture(textureEntry.surfaceTexture());
-        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
-            @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                Log.wtf("FUCKKKKKKKKKKKKKKKKKKKK", "onSurfaceTextureAvailable");
-            }
-
-            @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-                Log.wtf("FUCKKKKKKKKKKKKKKKKKKKK", "onSurfaceTextureSizeChanged");
-            }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                Log.wtf("FUCKKKKKKKKKKKKKKKKKKKK", "onSurfaceTextureDestroyed");
-                return mediaPlayer.isReleased();
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                Log.wtf("FUCKKKKKKKKKKKKKKKKKKKK", "onSurfaceTextureUpdated");
-            }
-        });
+         * Init view
+         */
+        videoView = (PlayerView) LayoutInflater.from(registrar.activity()).inflate(R.layout.video_view, null);
     }
 
     @Override
     public View getView() {
-        return textureView;
+        return videoView;
     }
 
     @Override
     public void dispose() {
-        if (!mediaPlayer.isReleased()) {
-            mediaPlayer.release();
-        }
     }
 
     /**
-     * Init VLCPlayer
-     * ArrayList<String> options = new ArrayList<>();
-     * options.add("--no-drop-late-frames");
-     * options.add("--no-skip-frames");
-     * options.add("--rtsp-tcp");
-     * options.add("--quiet");
+     * Init GSYPlayer
      */
-    private void initPlayer(String url, ArrayList<String> vlcOptions) {
-        libVLC = new LibVLC(context, vlcOptions);
-        mediaPlayer = new MediaPlayer(libVLC);
-        mediaPlayer.getVLCVout().setVideoSurface(textureView.getSurfaceTexture());
-        mediaPlayer.getVLCVout().attachViews();
-        mediaPlayer.setMedia(new Media(libVLC, Uri.parse(url)));
+    private void initPlayer(String url) {
+        player = ExoPlayer.Builder();
     }
 
     @Override
@@ -120,20 +79,16 @@ public class VideoView implements PlatformView, MethodCallHandler {
         switch (methodCall.method) {
             case "initialize":
                 String url = methodCall.argument("url");
-                ArrayList<String> vlcOptions = methodCall.argument("VLCOptions");
-                initPlayer(url, vlcOptions);
+                initPlayer(url);
                 result.success(null);
                 break;
             case "play":
-                mediaPlayer.play();
                 result.success(null);
                 break;
             case "pause":
-                mediaPlayer.pause();
                 result.success(null);
                 break;
             case "stop":
-                mediaPlayer.stop();
                 result.success(null);
                 break;
         }

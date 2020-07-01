@@ -5,7 +5,6 @@ class RVController {
   MethodChannel _methodChannel;
 
   String url = "";
-  List<String> vlcOptions;
 
   void Function() _onInit;
   void Function() _onPlay;
@@ -15,7 +14,6 @@ class RVController {
 
   RVController(
     this.url, {
-    this.vlcOptions,
     void Function() onInit,
     void Function() onPlay,
     void Function() onPause,
@@ -34,16 +32,7 @@ class RVController {
   Future<void> initPlayer(int id) async {
     if (_methodChannel != null) return;
     _methodChannel = MethodChannel("$pluginBase/method_$id");
-    await _methodChannel.invokeMethod("initialize", {
-      "url": url,
-      "VLCOptions": vlcOptions ??
-          <String>[
-            "--no-drop-late-frames",
-            "--no-skip-frames",
-            "--rtsp-tcp",
-            "--quiet",
-          ],
-    });
+    await _methodChannel.invokeMethod("initialize", {"url": url});
     _onInit();
   }
 
