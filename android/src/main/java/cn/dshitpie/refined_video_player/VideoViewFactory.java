@@ -1,15 +1,11 @@
 package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
-import android.graphics.SurfaceTexture;
+import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.view.TextureView;
-import android.view.ViewGroup;
-
-import androidx.annotation.NonNull;
-
-import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.analytics.AnalyticsListener;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
@@ -33,7 +29,9 @@ import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
 import io.flutter.view.TextureRegistry;
 
-public class VideoViewFactory extends PlatformViewFactory implements Player.EventListener, MethodChannel.MethodCallHandler {
+public class VideoViewFactory extends PlatformViewFactory implements AnalyticsListener, MethodChannel.MethodCallHandler {
+    private static final String TAG = "RefinedVideoPlayer -> VideoViewFactory";
+
     private final Registrar registrar;
     private final MethodChannel methodChannel;
     private final QueuingEventSink eventSink;
@@ -71,11 +69,11 @@ public class VideoViewFactory extends PlatformViewFactory implements Player.Even
         exoPlayer = new SimpleExoPlayer.Builder(registrar.activity())
                 .setTrackSelector(trackSelector)
                 .build();
+        exoPlayer.addAnalyticsListener(this);
     }
 
     @Override
     public PlatformView create(Context context, int viewId, Object args) {
-        Log.i("RefinedVideoPlayer", "create: " + context.toString());
         final TextureRegistry.SurfaceTextureEntry textureEntry = registrar.textures().createSurfaceTexture();
         textureView = new TextureView(context);
         textureView.setSurfaceTexture(textureEntry.surfaceTexture());
@@ -84,13 +82,12 @@ public class VideoViewFactory extends PlatformViewFactory implements Player.Even
     }
 
     public void dispose() {
-        Log.i("RefinedVideoPlayer", "disposeFactory");
         methodChannel.setMethodCallHandler(null);
         eventChannel.setStreamHandler(null);
         eventSink.endOfStream();
 
         exoPlayer.stop(true);
-        exoPlayer.removeListener(this);
+        exoPlayer.removeAnalyticsListener(this);
         exoPlayer.release();
     }
 
@@ -117,13 +114,6 @@ public class VideoViewFactory extends PlatformViewFactory implements Player.Even
      * Init ExoPlayer
      */
     private void initPlayer(String url) {
-        Log.i("RefinedVideoPlayer", "initPlayer");
-        try {
-            exoPlayer.addListener(this);
-            exoPlayer.setVideoTextureView(textureView);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         Uri uri = Uri.parse(url);
         DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
         MediaSource mediaSource = new ProgressiveMediaSource.Factory(
@@ -131,22 +121,17 @@ public class VideoViewFactory extends PlatformViewFactory implements Player.Even
                 new DefaultExtractorsFactory()
         ).createMediaSource(uri);
         exoPlayer.prepare(mediaSource);
-        exoPlayer.setPlayWhenReady(false);
+        exoPlayer.setPlayWhenReady(true);
     }
 
     @Override
     public void onMethodCall(MethodCall methodCall, MethodChannel.Result result) {
+        Log.i(TAG, "onMethodCall: " + methodCall.method);
         HashMap<String, Object> eventObject = new HashMap<>();
         switch (methodCall.method) {
             case "initialize":
                 String url = methodCall.argument("url");
                 initPlayer(url);
-//                Format videoFormat = exoPlayer.getVideoFormat();
-//                eventObject.put("height", videoFormat.height);
-//                eventObject.put("width", videoFormat.width);
-//                eventObject.put("duration", exoPlayer.getDuration());
-//                result.success(eventObject);
-//                eventObject.clear();
                 result.success(null);
                 break;
             case "play":
@@ -163,4 +148,35 @@ public class VideoViewFactory extends PlatformViewFactory implements Player.Even
                 break;
         }
     }
+
+    @Override
+    public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
+        Log.i(TAG, "onPlayerStateChanged: " + playbackState);
+        HashMap<String, Object> eventObject = new HashMap<>();
+        switch (playbackState) {
+            case PlaybackState.STATE_PLAYING:
+                eventObject.put("name", "playing");
+                break;
+            case PlaybackState.STATE_PAUSED:
+                eventObject.put("name", "paused");
+                break;
+            case PlaybackState.STATE_STOPPED:
+                eventObject.put("name", "stopped");
+                break;
+        }
+        if (eventObject.isEmpty()) return;
+        eventSink.success(eventObject);
+    }
+
+    @Override
+    public void onVideoSizeChanged(EventTime eventTime, int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+        Log.i(TAG, "onVideoSizeChanged: " + width + "/" + height);
+        HashMap<String, Object> eventObject = new HashMap<>();
+        eventObject.put("name", "size");
+        eventObject.put("height", height);
+        eventObject.put("width", width);
+        eventObject.put("duration", exoPlayer.getDuration());
+        eventSink.success(eventObject);
+    }
+
 }
