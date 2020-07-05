@@ -1,9 +1,10 @@
 package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
-import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.view.TextureView;
+
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.analytics.AnalyticsListener;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -17,7 +18,7 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 import io.flutter.Log;
 import io.flutter.plugin.common.EventChannel;
@@ -28,6 +29,9 @@ import io.flutter.plugin.common.StandardMessageCodec;
 import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
 import io.flutter.view.TextureRegistry;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.functions.Consumer;
+import io.reactivex.rxjava3.functions.Function;
 
 public class VideoViewFactory extends PlatformViewFactory implements AnalyticsListener, MethodChannel.MethodCallHandler {
     private static final String TAG = "RefinedVideoPlayer -> VideoViewFactory";
@@ -39,6 +43,7 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
 
     private TextureView textureView;
     private final SimpleExoPlayer exoPlayer;
+    Observable<Long> position;
 
     public VideoViewFactory(Registrar registrar) {
         /**
@@ -122,6 +127,7 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
         ).createMediaSource(uri);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
+        onPlayerTimeProcessing();
     }
 
     @Override
@@ -149,23 +155,48 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
         }
     }
 
+    public void onPlayerTimeProcessing() {
+        final HashMap<String, Object> eventObject = new HashMap<>();
+        position = Observable
+                .interval(1, TimeUnit.SECONDS)
+                .map(new Function<Long, Long>() {
+                    @Override
+                    public Long apply(Long aLong) {
+                        return exoPlayer.getCurrentPosition();
+                    }
+                });
+        position.subscribe(new Consumer<Long>() {
+            @Override
+            public void accept(Long aLong) {
+                Log.i(TAG, "timeChanged: " + aLong);
+                eventObject.put("name", "timeChanged");
+                eventObject.put("value", exoPlayer.getCurrentPosition());
+                eventObject.put("speed", exoPlayer.getPlaybackParameters().speed);
+                eventSink.success(eventObject);
+            }
+        });
+    }
+
     @Override
     public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
         Log.i(TAG, "onPlayerStateChanged: " + playbackState);
         HashMap<String, Object> eventObject = new HashMap<>();
-        switch (playbackState) {
-            case PlaybackState.STATE_PLAYING:
-                eventObject.put("name", "playing");
-                break;
-            case PlaybackState.STATE_PAUSED:
-                eventObject.put("name", "paused");
-                break;
-            case PlaybackState.STATE_STOPPED:
-                eventObject.put("name", "stopped");
-                break;
+        if (playbackState == Player.STATE_ENDED) {
+            eventObject.put("name", "ended");
         }
         if (eventObject.isEmpty()) return;
         eventSink.success(eventObject);
+    }
+
+    @Override
+    public void onIsPlayingChanged(EventTime eventTime, boolean isPlaying) {
+        Log.i(TAG, "onIsPlayingChanged: " + isPlaying);
+        HashMap<String, Object> eventObject = new HashMap<>();
+        if (isPlaying) {
+            eventObject.put("name", "playing");
+        } else {
+            eventObject.put("name", "paused");
+        }
     }
 
     @Override
@@ -178,5 +209,4 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
         eventObject.put("duration", exoPlayer.getDuration());
         eventSink.success(eventObject);
     }
-
 }
