@@ -1,77 +1,132 @@
 part of refined_video_player;
 
-class RVController {
+enum RVPState {
+  PLAYING,
+  PAUSED,
+  STOPPED,
+}
+
+class RVPController {
   static final pluginBase = "refined_video_player";
   MethodChannel _methodChannel;
-
-  String url = "";
-  bool _isFullScreen = false;
-  bool get isFullScreen => _isFullScreen;
+  EventChannel _eventChannel;
   BuildContext _context;
 
-  void Function() _onInit;
-  void Function() _onPlay;
-  void Function() _onPause;
-  void Function() _onStop;
-  void Function() _onTimeChange;
+  String url = "";
+  ValueNotifier<bool> _isFullScreen = ValueNotifier(false);
+  ValueNotifier<bool> get isFullScreen => _isFullScreen;
+  ValueNotifier<Size> _size = ValueNotifier(Size(16, 9));
+  ValueNotifier<Size> get size => _size;
+  ValueNotifier<Duration> _duration = ValueNotifier(Duration.zero);
+  ValueNotifier<Duration> get duration => _duration;
+  ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
+  ValueNotifier<Duration> get position => _position;
+  ValueNotifier<RVPState> _state = ValueNotifier(RVPState.STOPPED);
+  ValueNotifier<RVPState> get state => _state;
+  ValueNotifier<double> _speed = ValueNotifier(1);
+  ValueNotifier<double> get speed => _speed;
 
-  RVController(
+  void Function() _onInited;
+  void Function() _onPlaying;
+  void Function() _onPaused;
+  void Function() _onStopped;
+  void Function() _onTimeChanged;
+
+  RVPController(
     this.url, {
-    void Function() onInit,
-    void Function() onPlay,
-    void Function() onPause,
-    void Function() onStop,
-    void Function() onTimeChange,
+    void Function() onInited,
+    void Function() onPlaying,
+    void Function() onPaused,
+    void Function() onStopped,
+    void Function() onTimeChanged,
   }) {
-    _onInit = onInit ?? () {};
-    _onPlay = onPlay ?? () {};
-    _onPause = onPause ?? () {};
-    _onStop = onStop ?? () {};
-    _onTimeChange = onTimeChange ?? () {};
-  }
-
-  /// This method can only be executed once RefinedVideoPlayer
-  /// view is created.
-  set registerContext(BuildContext context) {
-    _context = context;
+    _onInited = onInited ?? () {};
+    _onPlaying = onPlaying ?? () {};
+    _onPaused = onPaused ?? () {};
+    _onStopped = onStopped ?? () {};
+    _onTimeChanged = onTimeChanged ?? () {};
   }
 
   /// This method can only be executed onPlatformViewCreated.
-  /// After that, though accessible, this method has no use.
+  /// After that, this method has no use.
   Future<void> _initPlayer(int id) async {
+    if (_isFullScreen.value) {
+      AutoOrientation.landscapeAutoMode();
+    } else {
+      AutoOrientation.portraitUpMode();
+    }
     if (_methodChannel != null) return;
     _methodChannel = MethodChannel("$pluginBase/method");
+    _eventChannel = EventChannel("$pluginBase/event");
     await _methodChannel.invokeMethod("initialize", {"url": url});
-    _onInit();
+    _eventChannel.receiveBroadcastStream().listen((event) {
+      switch (event["name"]) {
+        case "info":
+          Size newSize = Size(
+            double.parse(event["width"] as String),
+            double.parse(event["height"] as String),
+          );
+          _size.value = newSize;
+          _duration.value = Duration(
+            milliseconds: double.parse(
+              event["duration"] as String,
+            ).toInt(),
+          );
+          _onInited();
+          break;
+        case "playing":
+          _state.value = RVPState.PLAYING;
+          _onPlaying();
+          break;
+        case "paused":
+          _state.value = RVPState.PAUSED;
+          _onPaused();
+          break;
+        case "stopped":
+          _state.value = RVPState.STOPPED;
+          _onStopped();
+          break;
+        case "timeChanged":
+          _position.value = Duration(
+            milliseconds: double.parse(
+              event["value"] as String,
+            ).toInt(),
+          );
+          _speed.value = double.parse(
+            event["speed"] as String,
+          );
+          _onTimeChanged();
+          break;
+        default:
+      }
+    });
   }
 
   Future<void> play() async {
     await _methodChannel.invokeMethod("play");
-    _onPlay();
   }
 
   Future<void> pause() async {
     await _methodChannel.invokeMethod("pause");
-    _onPause();
   }
 
   Future<void> stop() async {
     await _methodChannel.invokeMethod("stop");
-    _onStop();
   }
 
   void setFullScreen(bool wantFullScreen) {
-    if (wantFullScreen == _isFullScreen) return;
-    _isFullScreen = wantFullScreen;
-    if (_isFullScreen) {
-      AutoOrientation.landscapeAutoMode();
+    if (wantFullScreen == _isFullScreen.value) return;
+    _isFullScreen.value = wantFullScreen;
+    if (_isFullScreen.value) {
       Navigator.of(_context).push(
         MaterialPageRoute(
           builder: (_) => RefinedVideoPlayer(controller: this),
         ),
       );
+    } else {
+      Navigator.of(_context).pop();
     }
   }
 
-  void toggleFullScreen() => setFullScreen(!_isFullScreen);
+  void toggleFullScreen() => setFullScreen(!_isFullScreen.value);
 }

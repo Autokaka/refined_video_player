@@ -1,7 +1,7 @@
 part of refined_video_player;
 
 class RefinedVideoPlayer extends StatefulWidget {
-  final RVController controller;
+  final RVPController controller;
 
   RefinedVideoPlayer({
     Key key,
@@ -13,7 +13,7 @@ class RefinedVideoPlayer extends StatefulWidget {
 }
 
 class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
-  RVController controller;
+  RVPController controller;
 
   @override
   void didChangeDependencies() {
@@ -26,14 +26,13 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     return WillPopScope(
       child: Scaffold(
         body: Hero(
-          tag: RVController.pluginBase,
+          tag: RVPController.pluginBase,
           child: _VideoView(controller: controller),
         ),
       ),
       onWillPop: () async {
-        if (controller.isFullScreen) {
+        if (controller.isFullScreen.value) {
           controller.toggleFullScreen();
-          AutoOrientation.portraitUpMode();
         }
         return true;
       },

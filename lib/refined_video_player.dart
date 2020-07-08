@@ -1,5 +1,6 @@
 library refined_video_player;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:auto_orientation/auto_orientation.dart';

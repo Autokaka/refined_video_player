@@ -1,7 +1,7 @@
 part of refined_video_player;
 
 class _VideoView extends StatefulWidget {
-  final RVController controller;
+  final RVPController controller;
 
   _VideoView({
     Key key,
@@ -14,7 +14,7 @@ class _VideoView extends StatefulWidget {
 
 class _VideoViewState extends State<_VideoView> {
   MethodChannel methodChannel;
-  RVController controller;
+  RVPController controller;
 
   @override
   void didChangeDependencies() {
@@ -24,19 +24,33 @@ class _VideoViewState extends State<_VideoView> {
 
   @override
   Widget build(BuildContext context) {
-    controller.registerContext = context;
+    controller._context = context;
+    return ValueListenableBuilder<Size>(
+      valueListenable: controller.size,
+      builder: (context, size, child) {
+        return Container(
+          color: Colors.black,
+          alignment: Alignment.center,
+          child: AspectRatio(
+            aspectRatio: size.aspectRatio,
+            child: buildPlatformView(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildPlatformView() {
     if (Platform.isAndroid) {
       return AndroidView(
-        viewType: "${RVController.pluginBase}/view",
+        viewType: "${RVPController.pluginBase}/view",
         onPlatformViewCreated: controller._initPlayer,
-        creationParamsCodec: const StandardMessageCodec(),
       );
     }
     if (Platform.isIOS) {
       return UiKitView(
-        viewType: "${RVController.pluginBase}/view",
+        viewType: "${RVPController.pluginBase}/view",
         onPlatformViewCreated: controller._initPlayer,
-        creationParamsCodec: const StandardMessageCodec(),
       );
     }
     return Center(
