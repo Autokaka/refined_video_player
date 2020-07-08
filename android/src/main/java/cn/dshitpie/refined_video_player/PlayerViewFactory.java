@@ -3,7 +3,10 @@ package cn.dshitpie.refined_video_player;
 import android.content.Context;
 import android.net.Uri;
 import android.view.SurfaceView;
+
 import androidx.annotation.NonNull;
+
+import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.analytics.AnalyticsListener;
@@ -16,8 +19,11 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.StandardMessageCodec;
@@ -150,6 +156,7 @@ public class PlayerViewFactory
         } else {
             eventObject.put("name", "paused");
         }
+        eventSink.success(eventObject);
     }
 
     @Override
@@ -187,5 +194,14 @@ public class PlayerViewFactory
 
     protected void stopVideo() {
         exoPlayer.stop(true);
+    }
+
+    protected void videoSeekTo(long milliSec) {
+        exoPlayer.seekTo(milliSec);
+    }
+
+    protected void setVideoSpeed(float speed) {
+        PlaybackParameters playbackParameters = new PlaybackParameters(speed, 1.0F);
+        exoPlayer.setPlaybackParameters(playbackParameters);
     }
 }

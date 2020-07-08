@@ -53,6 +53,16 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
                 playerViewFactory.stopVideo();
                 result.success(null);
                 break;
+            case "seekTo":
+                long time = Long.parseLong((String) call.argument("time"));
+                playerViewFactory.videoSeekTo(time);
+                result.success(null);
+                break;
+            case "setSpeed":
+                float speed = Float.parseFloat((String) call.argument("speed"));
+                playerViewFactory.setVideoSpeed(speed);
+                result.success(null);
+                break;
         }
     }
 }
