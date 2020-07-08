@@ -1,28 +1,58 @@
 package cn.dshitpie.refined_video_player;
 
-import io.flutter.plugin.common.PluginRegistry;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
-import io.flutter.view.FlutterNativeView;
+import androidx.annotation.NonNull;
 
-public class RefinedVideoPlayerPlugin {
-    public static void registerWith(Registrar registrar) {
-        if (registrar.activity() == null) return;
-        final VideoViewFactory videoViewFactory = new VideoViewFactory(registrar);
+import java.util.HashMap;
 
-        registrar
-                .platformViewRegistry()
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+
+public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
+    private MethodChannel methodChannel;
+    private PlayerViewFactory playerViewFactory;
+
+    @Override
+    public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        methodChannel = new MethodChannel(binding.getBinaryMessenger(), "refined_video_player/method");
+        methodChannel.setMethodCallHandler(this);
+        playerViewFactory = new PlayerViewFactory(binding);
+        binding
+                .getPlatformViewRegistry()
                 .registerViewFactory(
                         "refined_video_player/view",
-                        videoViewFactory
+                        playerViewFactory
                 );
-        registrar.addViewDestroyListener(
-                new PluginRegistry.ViewDestroyListener() {
-                    @Override
-                    public boolean onViewDestroy(FlutterNativeView view) {
-                        videoViewFactory.dispose();
-                        return true;
-                    }
-                }
-        );
+    }
+
+    @Override
+    public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        methodChannel.setMethodCallHandler(null);
+        methodChannel = null;
+        playerViewFactory.dispose();
+    }
+
+    @Override
+    public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+        HashMap<String, Object> eventObject = new HashMap<>();
+        switch (call.method) {
+            case "initialize":
+                String url = call.argument("url");
+                playerViewFactory.setUpPlayer(url);
+                result.success(null);
+                break;
+            case "play":
+                playerViewFactory.playVideo();
+                result.success(null);
+                break;
+            case "pause":
+                playerViewFactory.pauseVideo();
+                result.success(null);
+                break;
+            case "stop":
+                playerViewFactory.stopVideo();
+                result.success(null);
+                break;
+        }
     }
 }

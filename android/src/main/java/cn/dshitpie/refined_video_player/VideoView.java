@@ -1,22 +1,26 @@
 package cn.dshitpie.refined_video_player;
 
-import android.view.TextureView;
+import android.view.SurfaceView;
 import android.view.View;
+import androidx.annotation.NonNull;
 import io.flutter.plugin.platform.PlatformView;
 
 public class VideoView implements PlatformView {
-    private final TextureView textureView;
+    private static final String TAG = "RVP -> VideoView";
 
-    VideoView(TextureView textureView) {
-        this.textureView = textureView;
+    private SurfaceView surfaceView;
+
+    VideoView(@NonNull SurfaceView surfaceView) {
+        this.surfaceView = surfaceView;
     }
 
     @Override
     public View getView() {
-        return textureView;
+        return surfaceView;
     }
 
     @Override
     public void dispose() {
+        surfaceView = null;
     }
 }

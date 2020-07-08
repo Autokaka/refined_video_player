@@ -2,8 +2,8 @@ package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
 import android.net.Uri;
-import android.view.TextureView;
-
+import android.view.SurfaceView;
+import androidx.annotation.NonNull;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.analytics.AnalyticsListener;
@@ -16,62 +16,54 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
-
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
-
-import io.flutter.Log;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.common.StandardMessageCodec;
 import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
-import io.flutter.view.TextureRegistry;
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.functions.Function;
 
-public class VideoViewFactory extends PlatformViewFactory implements AnalyticsListener, MethodChannel.MethodCallHandler {
-    private static final String TAG = "RefinedVideoPlayer -> VideoViewFactory";
+public class PlayerViewFactory
+        extends PlatformViewFactory
+        implements AnalyticsListener {
+    private static final String TAG = "RVP -> VideoViewFactory";
 
-    private final Registrar registrar;
-    private final MethodChannel methodChannel;
-    private final QueuingEventSink eventSink;
-    private final EventChannel eventChannel;
+    private FlutterPlugin.FlutterPluginBinding binding;
+    private QueuingEventSink eventSink;
+    private EventChannel eventChannel;
 
-    private TextureView textureView;
-    private final SimpleExoPlayer exoPlayer;
-    Observable<Long> position;
+    private SurfaceView surfaceView;
 
-    public VideoViewFactory(Registrar registrar) {
-        /**
-         * Init Channel
-         */
+    private SimpleExoPlayer exoPlayer;
+    private Observable<Long> position;
+    private Disposable positionDisposable;
+
+    public PlayerViewFactory(@NonNull FlutterPlugin.FlutterPluginBinding binding) {
         super(StandardMessageCodec.INSTANCE);
-        this.registrar = registrar;
+        this.binding = binding;
         eventSink = new QueuingEventSink();
-        eventChannel = new EventChannel(registrar.messenger(), "refined_video_player/event");
+        eventChannel = new EventChannel(binding.getBinaryMessenger(), "refined_video_player/event");
         eventChannel.setStreamHandler(new EventChannel.StreamHandler() {
             @Override
-            public void onListen(Object o, EventChannel.EventSink sink) {
-                eventSink.setDelegate(sink);
+            public void onListen(Object arguments, EventChannel.EventSink events) {
+                eventSink.setDelegate(events);
             }
 
             @Override
-            public void onCancel(Object o) {
+            public void onCancel(Object arguments) {
                 eventSink.setDelegate(null);
             }
         });
-        methodChannel = new MethodChannel(registrar.messenger(), "refined_video_player/method");
-        methodChannel.setMethodCallHandler(this);
 
-        /**
-         * Init Player
-         */
-        final TrackSelector trackSelector = new DefaultTrackSelector(registrar.activity());
-        exoPlayer = new SimpleExoPlayer.Builder(registrar.activity())
+        final TrackSelector trackSelector = new DefaultTrackSelector(binding.getApplicationContext());
+        exoPlayer = new SimpleExoPlayer
+                .Builder(binding.getApplicationContext())
                 .setTrackSelector(trackSelector)
                 .build();
         exoPlayer.addAnalyticsListener(this);
@@ -79,21 +71,24 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
 
     @Override
     public PlatformView create(Context context, int viewId, Object args) {
-        final TextureRegistry.SurfaceTextureEntry textureEntry = registrar.textures().createSurfaceTexture();
-        textureView = new TextureView(context);
-        textureView.setSurfaceTexture(textureEntry.surfaceTexture());
-        exoPlayer.setVideoTextureView(textureView);
-        return new VideoView(textureView);
+        surfaceView = new SurfaceView(context);
+        exoPlayer.setVideoSurfaceView(surfaceView);
+        return new VideoView(surfaceView);
     }
 
     public void dispose() {
-        methodChannel.setMethodCallHandler(null);
         eventChannel.setStreamHandler(null);
         eventSink.endOfStream();
+        eventSink = null;
+        eventChannel = null;
 
-        exoPlayer.stop(true);
+        positionDisposable.dispose();
         exoPlayer.removeAnalyticsListener(this);
+        exoPlayer.stop(true);
+        exoPlayer.clearVideoSurfaceView(surfaceView);
         exoPlayer.release();
+        surfaceView = null;
+        exoPlayer = null;
     }
 
     private DataSource.Factory getDataSourceFactory(Uri uri) {
@@ -110,15 +105,67 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
             );
         }
         return new DefaultDataSourceFactory(
-                registrar.activity(),
+                binding.getApplicationContext(),
                 "ExoPlayer"
         );
     }
 
+    public void onPlayerTimeProcessing() {
+        final HashMap<String, Object> eventObject = new HashMap<>();
+        position = Observable
+                .interval(1, TimeUnit.SECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(new Function<Long, Long>() {
+                    @Override
+                    public Long apply(Long aLong) {
+                        return exoPlayer.getCurrentPosition();
+                    }
+                });
+        positionDisposable = position.subscribe(new Consumer<Long>() {
+            @Override
+            public void accept(Long aLong) {
+                eventObject.put("name", "timeChanged");
+                eventObject.put("value", "" + exoPlayer.getCurrentPosition());
+                eventObject.put("speed", "" + exoPlayer.getPlaybackParameters().speed);
+                eventSink.success(eventObject);
+            }
+        });
+    }
+
+    @Override
+    public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
+        HashMap<String, Object> eventObject = new HashMap<>();
+        if (playbackState == Player.STATE_ENDED) {
+            eventObject.put("name", "ended");
+        }
+        if (eventObject.isEmpty()) return;
+        eventSink.success(eventObject);
+    }
+
+    @Override
+    public void onIsPlayingChanged(EventTime eventTime, boolean isPlaying) {
+        HashMap<String, Object> eventObject = new HashMap<>();
+        if (isPlaying) {
+            eventObject.put("name", "playing");
+        } else {
+            eventObject.put("name", "paused");
+        }
+    }
+
+    @Override
+    public void onVideoSizeChanged(EventTime eventTime, int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
+        HashMap<String, Object> eventObject = new HashMap<>();
+        eventObject.put("name", "info");
+        eventObject.put("height", "" + height);
+        eventObject.put("width", "" + width);
+        eventObject.put("duration", "" + exoPlayer.getDuration());
+        eventSink.success(eventObject);
+    }
+
     /**
-     * Init ExoPlayer
+     * Video Player API
      */
-    private void initPlayer(String url) {
+    protected void setUpPlayer(String url) {
         Uri uri = Uri.parse(url);
         DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
         MediaSource mediaSource = new ProgressiveMediaSource.Factory(
@@ -130,83 +177,15 @@ public class VideoViewFactory extends PlatformViewFactory implements AnalyticsLi
         onPlayerTimeProcessing();
     }
 
-    @Override
-    public void onMethodCall(MethodCall methodCall, MethodChannel.Result result) {
-        Log.i(TAG, "onMethodCall: " + methodCall.method);
-        HashMap<String, Object> eventObject = new HashMap<>();
-        switch (methodCall.method) {
-            case "initialize":
-                String url = methodCall.argument("url");
-                initPlayer(url);
-                result.success(null);
-                break;
-            case "play":
-                exoPlayer.setPlayWhenReady(true);
-                result.success(null);
-                break;
-            case "pause":
-                exoPlayer.setPlayWhenReady(false);
-                result.success(null);
-                break;
-            case "stop":
-                exoPlayer.stop(true);
-                result.success(null);
-                break;
-        }
+    protected void playVideo() {
+        exoPlayer.setPlayWhenReady(true);
     }
 
-    public void onPlayerTimeProcessing() {
-        final HashMap<String, Object> eventObject = new HashMap<>();
-        position = Observable
-                .interval(1, TimeUnit.SECONDS)
-                .map(new Function<Long, Long>() {
-                    @Override
-                    public Long apply(Long aLong) {
-                        return exoPlayer.getCurrentPosition();
-                    }
-                });
-        position.subscribe(new Consumer<Long>() {
-            @Override
-            public void accept(Long aLong) {
-                Log.i(TAG, "timeChanged: " + aLong);
-                eventObject.put("name", "timeChanged");
-                eventObject.put("value", exoPlayer.getCurrentPosition());
-                eventObject.put("speed", exoPlayer.getPlaybackParameters().speed);
-                eventSink.success(eventObject);
-            }
-        });
+    protected void pauseVideo() {
+        exoPlayer.setPlayWhenReady(false);
     }
 
-    @Override
-    public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
-        Log.i(TAG, "onPlayerStateChanged: " + playbackState);
-        HashMap<String, Object> eventObject = new HashMap<>();
-        if (playbackState == Player.STATE_ENDED) {
-            eventObject.put("name", "ended");
-        }
-        if (eventObject.isEmpty()) return;
-        eventSink.success(eventObject);
-    }
-
-    @Override
-    public void onIsPlayingChanged(EventTime eventTime, boolean isPlaying) {
-        Log.i(TAG, "onIsPlayingChanged: " + isPlaying);
-        HashMap<String, Object> eventObject = new HashMap<>();
-        if (isPlaying) {
-            eventObject.put("name", "playing");
-        } else {
-            eventObject.put("name", "paused");
-        }
-    }
-
-    @Override
-    public void onVideoSizeChanged(EventTime eventTime, int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-        Log.i(TAG, "onVideoSizeChanged: " + width + "/" + height);
-        HashMap<String, Object> eventObject = new HashMap<>();
-        eventObject.put("name", "size");
-        eventObject.put("height", height);
-        eventObject.put("width", width);
-        eventObject.put("duration", exoPlayer.getDuration());
-        eventSink.success(eventObject);
+    protected void stopVideo() {
+        exoPlayer.stop(true);
     }
 }

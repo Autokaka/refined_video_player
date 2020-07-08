@@ -11,14 +11,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  RVController playerCtrl;
+  RVPController playerCtrl;
 
   @override
   void initState() {
     super.initState();
-    playerCtrl = RVController(
-      "https://www.runoob.com/try/demo_source/movie.mp4",
-      onInit: () {
+    playerCtrl = RVPController(
+      "https://res.exexm.com/cw_145225549855002",
+      onInited: () {
         playerCtrl.play();
       },
     );

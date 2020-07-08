@@ -1,8 +1,7 @@
 package cn.dshitpie.refined_video_player;
 
-import java.util.ArrayList;
-
 import io.flutter.plugin.common.EventChannel;
+import java.util.ArrayList;
 
 /**
  * And implementation of {@link EventChannel.EventSink} which can wrap an underlying sink.
