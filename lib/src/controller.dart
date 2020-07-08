@@ -21,10 +21,20 @@ class RVPController {
   ValueNotifier<Duration> get duration => _duration;
   ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
   ValueNotifier<Duration> get position => _position;
+  ValueNotifier<Duration> _initialPosition = ValueNotifier(Duration.zero);
+  ValueNotifier<Duration> get initialPosition => _initialPosition;
   ValueNotifier<RVPState> _state = ValueNotifier(RVPState.STOPPED);
   ValueNotifier<RVPState> get state => _state;
   ValueNotifier<double> _speed = ValueNotifier(1);
   ValueNotifier<double> get speed => _speed;
+  ValueNotifier<double> _volume = ValueNotifier(0);
+  ValueNotifier<double> get volume => _volume;
+  ValueNotifier<double> _initialVolume = ValueNotifier(0);
+  ValueNotifier<double> get initialVolume => _initialVolume;
+  ValueNotifier<double> _brightness = ValueNotifier(0);
+  ValueNotifier<double> get brightness => _brightness;
+  ValueNotifier<double> _initialBrightness = ValueNotifier(0);
+  ValueNotifier<double> get initialBrightness => _initialBrightness;
 
   void Function() _onInited;
   void Function() _onPlaying;
@@ -52,8 +62,13 @@ class RVPController {
   Future<void> _initPlayer(int id) async {
     if (_isFullScreen.value) {
       AutoOrientation.landscapeAutoMode();
+      SystemChrome.setEnabledSystemUIOverlays([]);
     } else {
       AutoOrientation.portraitUpMode();
+      SystemChrome.setEnabledSystemUIOverlays([
+        SystemUiOverlay.top,
+        SystemUiOverlay.bottom,
+      ]);
     }
     if (_methodChannel != null) return;
     _methodChannel = MethodChannel("$pluginBase/method");
@@ -87,19 +102,37 @@ class RVPController {
           _onStopped();
           break;
         case "timeChanged":
+          if (_state.value != RVPState.PLAYING) break;
           _position.value = Duration(
             milliseconds: double.parse(
               event["value"] as String,
             ).toInt(),
           );
+          _initialPosition.value = _position.value;
           _speed.value = double.parse(
             event["speed"] as String,
           );
+          if (_position.value.inMilliseconds >=
+              _duration.value.inMilliseconds - 1) {
+            pause().then((_) => _state.value = RVPState.STOPPED);
+          }
           _onTimeChanged();
           break;
         default:
       }
     });
+    VolumeWatcher.getCurrentVolume.then(
+      (currentVolume) {
+        _volume.value = currentVolume;
+        _initialVolume.value = currentVolume;
+      },
+    );
+    Screen.brightness.then(
+      (currentBrightness) {
+        _brightness.value = currentBrightness;
+        _initialBrightness.value = currentBrightness;
+      },
+    );
   }
 
   Future<void> play() async {
@@ -112,6 +145,55 @@ class RVPController {
 
   Future<void> stop() async {
     await _methodChannel.invokeMethod("stop");
+  }
+
+  Future<void> seekTo(
+    Duration position, [
+    bool syncInitial = false,
+  ]) async {
+    await _methodChannel.invokeListMethod("seekTo", {
+      "time": position.inMilliseconds.toString(),
+    });
+    if (syncInitial) {
+      _initialPosition.value = position;
+    }
+  }
+
+  Future<void> setSpeed(double speed) async {
+    _methodChannel.invokeListMethod("setSpeed", {
+      "speed": speed.toString(),
+    });
+  }
+
+  Future<void> setVolume(
+    double volume, [
+    bool syncInitial = false,
+  ]) async {
+    if (volume < 0) volume = 0;
+    if (volume > 1) volume = 1;
+    await VolumeWatcher.setVolume(volume);
+    _volume.value = volume;
+    if (syncInitial) {
+      _initialVolume.value = volume;
+    }
+  }
+
+  Future<void> setBrightness(
+    double brightness, [
+    bool syncInitial = false,
+  ]) async {
+    if (brightness < 0) brightness = 0;
+    if (brightness > 1) brightness = 1;
+    await Screen.setBrightness(brightness);
+    _brightness.value = brightness;
+    if (syncInitial) {
+      _initialBrightness.value = brightness;
+    }
+  }
+
+  Future<void> keepScreenOn(bool onOrNot) async {
+    if (await Screen.isKeptOn) return;
+    await Screen.keepOn(onOrNot);
   }
 
   void setFullScreen(bool wantFullScreen) {

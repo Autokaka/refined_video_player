@@ -45,12 +45,14 @@ class _VideoViewState extends State<_VideoView> {
       return AndroidView(
         viewType: "${RVPController.pluginBase}/view",
         onPlatformViewCreated: controller._initPlayer,
+        hitTestBehavior: PlatformViewHitTestBehavior.transparent,
       );
     }
     if (Platform.isIOS) {
       return UiKitView(
         viewType: "${RVPController.pluginBase}/view",
         onPlatformViewCreated: controller._initPlayer,
+        hitTestBehavior: PlatformViewHitTestBehavior.transparent,
       );
     }
     return Center(
