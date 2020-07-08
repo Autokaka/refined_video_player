@@ -1,5 +1,5 @@
 name: refined_video_player
-description: A new Flutter plugin.
+description: A better, highly customizable, user-friendly video player using PlatformView + SurfaceView on Android to fix https://github.com/flutter/flutter/issues/44793. IOS not implemented yet.
 version: 0.0.1
 author:
 homepage:
