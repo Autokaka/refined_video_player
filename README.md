@@ -36,17 +36,13 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
           title: Text("VideoPlayerTest"),
         ),
         body: RefinedVideoPlayer(
           controller: playerCtrl,
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            playerCtrl.toggleFullScreen();
-          },
         ),
       ),
     );
