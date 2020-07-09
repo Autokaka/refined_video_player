@@ -184,11 +184,29 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
                 tag: RVPController.pluginBase,
                 child: _VideoView(controller: widget.controller),
               ),
-              widget.leftAreaBuilder ?? Container(),
-              widget.topAreaBuilder ?? Container(),
-              widget.rightAreaBuilder ?? buildDefaultRightArea(),
-              widget.bottomAreaBuilder ?? buildDefaultBottomArea(),
-              widget.centerAreaBuilder ?? buildDefaultCenterArea(),
+              Positioned(
+                left: 0,
+                child: widget.leftAreaBuilder() ?? Container(),
+              ),
+              Positioned(
+                top: 0,
+                child: widget.topAreaBuilder() ?? Container(),
+              ),
+              Positioned(
+                right: 0,
+                child: widget.rightAreaBuilder() ?? buildDefaultRightArea(),
+              ),
+              Positioned(
+                bottom: 0,
+                child: widget.bottomAreaBuilder() ?? buildDefaultBottomArea(),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
+                width: MediaQuery.of(context).size.width,
+                child: Center(
+                  child: widget.centerAreaBuilder() ?? buildDefaultCenterArea(),
+                ),
+              ),
             ],
           ),
           onTap: manageAreas,
@@ -255,87 +273,84 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
   Widget buildDefaultRightArea() {
     if (!showRightArea) return Container();
 
-    return Positioned(
-      right: 0,
-      child: Container(
-        width: 150,
-        height: MediaQuery.of(context).size.height,
-        color: Colors.black.withOpacity(0.65),
-        margin: EdgeInsets.only(
-          top: 30,
-        ),
-        padding: EdgeInsets.fromLTRB(45, 10, 0, 110),
-        child: ValueListenableBuilder<double>(
-          valueListenable: widget.controller.speed,
-          builder: (context, speed, child) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  child: Text(
-                    "X2.0",
-                    style: TextStyle(
-                      color: speed == 2.0 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+    return Container(
+      width: 150,
+      height: MediaQuery.of(context).size.height,
+      color: Colors.black.withOpacity(0.65),
+      margin: EdgeInsets.only(
+        top: 30,
+      ),
+      padding: EdgeInsets.fromLTRB(45, 10, 0, 110),
+      child: ValueListenableBuilder<double>(
+        valueListenable: widget.controller.speed,
+        builder: (context, speed, child) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                child: Text(
+                  "X2.0",
+                  style: TextStyle(
+                    color: speed == 2.0 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(2.0),
                 ),
-                GestureDetector(
-                  child: Text(
-                    "X1.75",
-                    style: TextStyle(
-                      color: speed == 1.75 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                onTap: () => widget.controller.setSpeed(2.0),
+              ),
+              GestureDetector(
+                child: Text(
+                  "X1.75",
+                  style: TextStyle(
+                    color: speed == 1.75 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(1.75),
                 ),
-                GestureDetector(
-                  child: Text(
-                    "X1.5",
-                    style: TextStyle(
-                      color: speed == 1.5 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                onTap: () => widget.controller.setSpeed(1.75),
+              ),
+              GestureDetector(
+                child: Text(
+                  "X1.5",
+                  style: TextStyle(
+                    color: speed == 1.5 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(1.5),
                 ),
-                GestureDetector(
-                  child: Text(
-                    "X1.25",
-                    style: TextStyle(
-                      color: speed == 1.25 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                onTap: () => widget.controller.setSpeed(1.5),
+              ),
+              GestureDetector(
+                child: Text(
+                  "X1.25",
+                  style: TextStyle(
+                    color: speed == 1.25 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(1.25),
                 ),
-                GestureDetector(
-                  child: Text(
-                    "原速",
-                    style: TextStyle(
-                      color: speed == 1.0 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                onTap: () => widget.controller.setSpeed(1.25),
+              ),
+              GestureDetector(
+                child: Text(
+                  "原速",
+                  style: TextStyle(
+                    color: speed == 1.0 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(1.0),
                 ),
-                GestureDetector(
-                  child: Text(
-                    "X0.5",
-                    style: TextStyle(
-                      color: speed == 0.5 ? Colors.blue : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                onTap: () => widget.controller.setSpeed(1.0),
+              ),
+              GestureDetector(
+                child: Text(
+                  "X0.5",
+                  style: TextStyle(
+                    color: speed == 0.5 ? Colors.blue : Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
-                  onTap: () => widget.controller.setSpeed(0.5),
                 ),
-              ],
-            );
-          },
-        ),
+                onTap: () => widget.controller.setSpeed(0.5),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -502,45 +517,42 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       );
     }
 
-    return Positioned(
-      bottom: 0,
-      child: ValueListenableBuilder<bool>(
-        valueListenable: widget.controller.isFullScreen,
-        builder: (context, isFullScreen, child) {
-          return Container(
-            width: MediaQuery.of(context).size.width,
-            height: isFullScreen ? 80 : 70,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black,
-                ],
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                isFullScreen ? buildProgressBar(isFullScreen) : Container(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    buildPlayPauseButton(),
-                    isFullScreen ? Container() : buildProgressBar(isFullScreen),
-                    buildProgressLabel(),
-                    buildDivider(isFullScreen),
-                    buildSpeedButton(isFullScreen),
-                    buildScreenButton(),
-                  ],
-                ),
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.controller.isFullScreen,
+      builder: (context, isFullScreen, child) {
+        return Container(
+          width: MediaQuery.of(context).size.width,
+          height: isFullScreen ? 80 : 70,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.transparent,
+                Colors.black,
               ],
             ),
-          );
-        },
-      ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              isFullScreen ? buildProgressBar(isFullScreen) : Container(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  buildPlayPauseButton(),
+                  isFullScreen ? Container() : buildProgressBar(isFullScreen),
+                  buildProgressLabel(),
+                  buildDivider(isFullScreen),
+                  buildSpeedButton(isFullScreen),
+                  buildScreenButton(),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -674,31 +686,21 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       );
     }
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.width,
-      child: Center(
-        child: Builder(
-          builder: (context) {
-            switch (showCenterArea) {
-              case "loading":
-                return buildLoadingPanel();
-                break;
-              case "brightness":
-                return buildBrightnessIndicator();
-                break;
-              case "volume":
-                return buildVolumeIndicator();
-                break;
-              case "progress":
-                return buildProgressIndicator();
-                break;
-              default:
-                return Container();
-            }
-          },
-        ),
-      ),
-    );
+    switch (showCenterArea) {
+      case "loading":
+        return buildLoadingPanel();
+        break;
+      case "brightness":
+        return buildBrightnessIndicator();
+        break;
+      case "volume":
+        return buildVolumeIndicator();
+        break;
+      case "progress":
+        return buildProgressIndicator();
+        break;
+      default:
+        return Container();
+    }
   }
 }
