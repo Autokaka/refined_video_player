@@ -66,8 +66,8 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
                 result.success(null);
                 break;
             case "dispose":
+                playerViewFactory.dispose();
                 result.success(null);
-                onDetachedFromEngine(binding);
                 break;
         }
     }
