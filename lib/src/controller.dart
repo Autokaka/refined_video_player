@@ -73,7 +73,7 @@ class RVPController {
     if (_methodChannel != null) return;
     _methodChannel = MethodChannel("$pluginBase/method");
     _eventChannel = EventChannel("$pluginBase/event");
-    await _methodChannel.invokeMethod("initialize", {"url": url});
+    await setMediaSource(url);
     _eventChannel.receiveBroadcastStream().listen((event) {
       switch (event["name"]) {
         case "info":
@@ -133,6 +133,10 @@ class RVPController {
         _initialBrightness.value = currentBrightness;
       },
     );
+  }
+
+  Future<void> setMediaSource(String url) async {
+    await _methodChannel.invokeMethod("setMediaSource", {"url": url});
   }
 
   Future<void> play() async {

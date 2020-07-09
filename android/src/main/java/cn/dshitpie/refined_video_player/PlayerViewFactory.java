@@ -123,6 +123,7 @@ public class PlayerViewFactory
     }
 
     public void onPlayerTimeProcessing() {
+        if (position != null) return;
         final HashMap<String, Object> eventObject = new HashMap<>();
         position = Observable
                 .interval(1, TimeUnit.SECONDS)
@@ -178,7 +179,7 @@ public class PlayerViewFactory
     /**
      * Video Player API
      */
-    protected void setUpPlayer(String url) {
+    protected void setMediaSource(String url) {
         Uri uri = Uri.parse(url);
         DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
         MediaSource mediaSource = new ProgressiveMediaSource.Factory(

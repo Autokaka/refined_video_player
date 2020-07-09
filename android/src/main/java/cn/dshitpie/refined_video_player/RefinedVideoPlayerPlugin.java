@@ -38,9 +38,9 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
     public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
         HashMap<String, Object> eventObject = new HashMap<>();
         switch (call.method) {
-            case "initialize":
-                String url = call.argument("url");
-                playerViewFactory.setUpPlayer(url);
+            case "setMediaSource":
+                String url = (String) call.argument("url");
+                playerViewFactory.setMediaSource(url);
                 result.success(null);
                 break;
             case "play":
