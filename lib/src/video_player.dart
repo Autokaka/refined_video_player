@@ -16,7 +16,6 @@ class RefinedVideoPlayer extends StatefulWidget {
   final Widget Function() rightAreaBuilder;
   final Widget Function() bottomAreaBuilder;
   final Widget Function() centerAreaBuilder;
-  final Widget Function() placeholderBuilder;
 
   final void Function(double newVolume) onChangingVolume;
   final void Function(double newBrightness) onChangingBrightness;
@@ -30,7 +29,6 @@ class RefinedVideoPlayer extends StatefulWidget {
     this.rightAreaBuilder,
     this.bottomAreaBuilder,
     this.centerAreaBuilder,
-    this.placeholderBuilder,
     this.onChangingVolume,
     this.onChangingBrightness,
     this.onChangingPosition,
@@ -186,25 +184,25 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
               ),
               Positioned(
                 left: 0,
-                child: widget.leftAreaBuilder() ?? Container(),
+                child: buildLeftArea(),
               ),
               Positioned(
                 top: 0,
-                child: widget.topAreaBuilder() ?? Container(),
+                child: buildTopArea(),
               ),
               Positioned(
                 right: 0,
-                child: widget.rightAreaBuilder() ?? buildDefaultRightArea(),
+                child: buildRightArea(),
               ),
               Positioned(
                 bottom: 0,
-                child: widget.bottomAreaBuilder() ?? buildDefaultBottomArea(),
+                child: buildBottomArea(),
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height,
                 width: MediaQuery.of(context).size.width,
                 child: Center(
-                  child: widget.centerAreaBuilder() ?? buildDefaultCenterArea(),
+                  child: buildCenterArea(),
                 ),
               ),
             ],
@@ -270,7 +268,24 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     setState(() => showBottomArea = !showBottomArea);
   }
 
-  Widget buildDefaultRightArea() {
+  Widget buildLeftArea() {
+    if (widget.leftAreaBuilder != null) {
+      return widget.rightAreaBuilder();
+    }
+    return Container();
+  }
+
+  Widget buildTopArea() {
+    if (widget.topAreaBuilder != null) {
+      return widget.topAreaBuilder();
+    }
+    return Container();
+  }
+
+  Widget buildRightArea() {
+    if (widget.rightAreaBuilder != null) {
+      return widget.rightAreaBuilder();
+    }
     if (!showRightArea) return Container();
 
     return Container(
@@ -355,7 +370,10 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     );
   }
 
-  Widget buildDefaultBottomArea() {
+  Widget buildBottomArea() {
+    if (widget.bottomAreaBuilder != null) {
+      return widget.bottomAreaBuilder();
+    }
     if (!showBottomArea) return Container();
 
     Widget buildPlayPauseButton() {
@@ -556,7 +574,10 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     );
   }
 
-  Widget buildDefaultCenterArea() {
+  Widget buildCenterArea() {
+    if (widget.centerAreaBuilder != null) {
+      return widget.centerAreaBuilder();
+    }
     Widget buildLoadingPanel() {
       return ValueListenableBuilder(
         valueListenable: widget.controller.state,
