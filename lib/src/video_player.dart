@@ -269,7 +269,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       ),
       onWillPop: () async {
         if (widget.controller.isFullScreen.value) {
-          widget.controller.toggleFullScreen();
+          widget.controller.toggleFullScreen(widget);
         }
         return true;
       },
@@ -545,7 +545,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
               isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
               color: Colors.white,
             ),
-            onPressed: widget.controller.toggleFullScreen,
+            onPressed: () => widget.controller.toggleFullScreen(widget),
           );
         },
       );

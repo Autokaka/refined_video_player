@@ -211,13 +211,13 @@ class RVPController {
     await Screen.keepOn(onOrNot);
   }
 
-  void setFullScreen(bool wantFullScreen) {
+  void setFullScreen(bool wantFullScreen, RefinedVideoPlayer playerInstance) {
     if (wantFullScreen == _isFullScreen.value) return;
     _isFullScreen.value = wantFullScreen;
     if (_isFullScreen.value) {
       Navigator.of(_context).push(
         MaterialPageRoute(
-          builder: (_) => RefinedVideoPlayer(controller: this),
+          builder: (_) => playerInstance,
         ),
       );
     } else {
@@ -225,5 +225,10 @@ class RVPController {
     }
   }
 
-  void toggleFullScreen() => setFullScreen(!_isFullScreen.value);
+  void toggleFullScreen(RefinedVideoPlayer playerInstance) {
+    setFullScreen(
+      !_isFullScreen.value,
+      playerInstance,
+    );
+  }
 }
