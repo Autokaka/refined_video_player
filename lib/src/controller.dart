@@ -151,7 +151,7 @@ class RVPController {
     Duration position, [
     bool syncInitial = false,
   ]) async {
-    await _methodChannel.invokeListMethod("seekTo", {
+    await _methodChannel.invokeMethod("seekTo", {
       "time": position.inMilliseconds.toString(),
     });
     if (syncInitial) {
@@ -159,8 +159,12 @@ class RVPController {
     }
   }
 
+  Future<void> dispose() async {
+    await _methodChannel.invokeMethod("dispose");
+  }
+
   Future<void> setSpeed(double speed) async {
-    _methodChannel.invokeListMethod("setSpeed", {
+    _methodChannel.invokeMethod("setSpeed", {
       "speed": speed.toString(),
     });
   }

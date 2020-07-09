@@ -11,9 +11,11 @@ import io.flutter.plugin.common.MethodChannel;
 public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
     private MethodChannel methodChannel;
     private PlayerViewFactory playerViewFactory;
+    private FlutterPluginBinding binding;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+        this.binding = binding;
         methodChannel = new MethodChannel(binding.getBinaryMessenger(), "refined_video_player/method");
         methodChannel.setMethodCallHandler(this);
         playerViewFactory = new PlayerViewFactory(binding);
@@ -62,6 +64,10 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
                 float speed = Float.parseFloat((String) call.argument("speed"));
                 playerViewFactory.setVideoSpeed(speed);
                 result.success(null);
+                break;
+            case "dispose":
+                result.success(null);
+                onDetachedFromEngine(binding);
                 break;
         }
     }
