@@ -82,12 +82,14 @@ public class PlayerViewFactory
         return new VideoView(surfaceView);
     }
 
-    public void dispose() {
+    public void disposeChannels() {
         eventChannel.setStreamHandler(null);
         eventSink.endOfStream();
         eventSink = null;
         eventChannel = null;
+    }
 
+    public void disposePlayer() {
         positionDisposable.dispose();
         exoPlayer.removeAnalyticsListener(this);
         exoPlayer.stop(true);

@@ -31,7 +31,7 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
         methodChannel.setMethodCallHandler(null);
         methodChannel = null;
-        playerViewFactory.dispose();
+        playerViewFactory.disposeChannels();
     }
 
     @Override
@@ -66,7 +66,7 @@ public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.Me
                 result.success(null);
                 break;
             case "dispose":
-                playerViewFactory.dispose();
+                playerViewFactory.disposePlayer();
                 result.success(null);
                 break;
         }
