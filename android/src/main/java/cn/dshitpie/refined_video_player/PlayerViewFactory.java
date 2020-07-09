@@ -90,8 +90,11 @@ public class PlayerViewFactory
     }
 
     public void disposePlayer() {
+        if (exoPlayer == null) return;
         positionDisposable.dispose();
+        exoPlayer.removeAnalyticsListener(this);
         exoPlayer.stop(true);
+        exoPlayer.clearVideoSurfaceView(surfaceView);
         exoPlayer.release();
         surfaceView = null;
         exoPlayer = null;
