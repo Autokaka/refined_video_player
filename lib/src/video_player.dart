@@ -213,10 +213,10 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
             ],
           ),
           onTap: () {
+            manageAreas();
             if (widget.onGestureTap != null) {
               return widget.onGestureTap();
             }
-            manageAreas();
           },
           onDoubleTap: () {
             if (widget.onGestureDoubleTap != null) {
