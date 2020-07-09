@@ -17,9 +17,11 @@ class RefinedVideoPlayer extends StatefulWidget {
   final Widget Function() bottomAreaBuilder;
   final Widget Function() centerAreaBuilder;
 
-  final void Function(double newVolume) onChangingVolume;
-  final void Function(double newBrightness) onChangingBrightness;
-  final void Function(Duration newPosition) onChangingPosition;
+  final void Function(double newVolume) onGestureChangingVolume;
+  final void Function(double newBrightness) onGestureChangingBrightness;
+  final void Function(Duration newPosition) onGestureChangingPosition;
+  final void Function() onGestureDoubleTap;
+  final void Function() onGestureTap;
 
   RefinedVideoPlayer({
     Key key,
@@ -29,9 +31,11 @@ class RefinedVideoPlayer extends StatefulWidget {
     this.rightAreaBuilder,
     this.bottomAreaBuilder,
     this.centerAreaBuilder,
-    this.onChangingVolume,
-    this.onChangingBrightness,
-    this.onChangingPosition,
+    this.onGestureChangingVolume,
+    this.onGestureChangingBrightness,
+    this.onGestureChangingPosition,
+    this.onGestureTap,
+    this.onGestureDoubleTap,
   }) : super(key: key);
 
   @override
@@ -102,8 +106,9 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       double currentBrightness = widget.controller.initialBrightness.value;
       double brightnessChange = (startPosition.y - endPosition.y) /
           MediaQuery.of(context).size.height;
-      if (widget.onChangingBrightness != null) {
-        widget.onChangingBrightness(currentBrightness + brightnessChange);
+      if (widget.onGestureChangingBrightness != null) {
+        widget
+            .onGestureChangingBrightness(currentBrightness + brightnessChange);
       } else {
         widget.controller.setBrightness(
           currentBrightness + brightnessChange,
@@ -116,8 +121,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       double currentVolume = widget.controller.initialVolume.value;
       double volumeChange = (startPosition.y - endPosition.y) /
           MediaQuery.of(context).size.height;
-      if (widget.onChangingVolume != null) {
-        widget.onChangingVolume(currentVolume + volumeChange);
+      if (widget.onGestureChangingVolume != null) {
+        widget.onGestureChangingVolume(currentVolume + volumeChange);
       } else {
         widget.controller.setVolume(
           currentVolume + volumeChange,
@@ -158,8 +163,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       milliseconds: (currentMilliSec + positionMilliSecChange).toInt(),
     );
 
-    if (widget.onChangingPosition != null) {
-      widget.onChangingPosition(newPosition);
+    if (widget.onGestureChangingPosition != null) {
+      widget.onGestureChangingPosition(newPosition);
     } else if (syncInitial) {
       setState(() => showCenterArea = "loading");
       Future.wait([
@@ -207,7 +212,18 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
               ),
             ],
           ),
-          onTap: manageAreas,
+          onTap: () {
+            if (widget.onGestureTap != null) {
+              return widget.onGestureTap();
+            }
+            manageAreas();
+          },
+          onDoubleTap: () {
+            if (widget.onGestureDoubleTap != null) {
+              return widget.onGestureDoubleTap();
+            }
+            widget.controller.togglePlay();
+          },
           onVerticalDragStart: (details) {
             startPosition = _Position(
               details.localPosition.dx,

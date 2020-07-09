@@ -143,6 +143,17 @@ class RVPController {
     await _methodChannel.invokeMethod("pause");
   }
 
+  Future<void> togglePlay() async {
+    if (_state.value == RVPState.STOPPED) return;
+    if (_state.value == RVPState.PLAYING) {
+      await pause();
+      _state.value = RVPState.PAUSED;
+    } else {
+      await play();
+      _state.value = RVPState.PLAYING;
+    }
+  }
+
   Future<void> stop() async {
     await _methodChannel.invokeMethod("stop");
   }
