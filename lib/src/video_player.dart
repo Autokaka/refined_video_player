@@ -57,9 +57,6 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
   @override
   void dispose() {
     widget.controller.keepScreenOn(false);
-    if (!widget.controller.isFullScreen.value) {
-      widget.controller.dispose();
-    }
     super.dispose();
   }
 

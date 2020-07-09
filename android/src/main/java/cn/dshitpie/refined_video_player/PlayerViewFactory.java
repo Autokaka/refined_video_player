@@ -66,7 +66,10 @@ public class PlayerViewFactory
                 eventSink.setDelegate(null);
             }
         });
+    }
 
+    private void initPlayer() {
+        if (exoPlayer != null) return;
         final TrackSelector trackSelector = new DefaultTrackSelector(binding.getApplicationContext());
         exoPlayer = new SimpleExoPlayer
                 .Builder(binding.getApplicationContext())
@@ -77,6 +80,7 @@ public class PlayerViewFactory
 
     @Override
     public PlatformView create(Context context, int viewId, Object args) {
+        initPlayer();
         surfaceView = new SurfaceView(context);
         exoPlayer.setVideoSurfaceView(surfaceView);
         return new VideoView(surfaceView);
@@ -90,7 +94,6 @@ public class PlayerViewFactory
     }
 
     public void disposePlayer() {
-        if (exoPlayer == null) return;
         positionDisposable.dispose();
         exoPlayer.removeAnalyticsListener(this);
         exoPlayer.stop(true);

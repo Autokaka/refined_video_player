@@ -5,12 +5,44 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   @override
-  _MyAppState createState() => _MyAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: FirstPage(),
+    );
+  }
 }
 
-class _MyAppState extends State<MyApp> {
+class FirstPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("VideoPlayerTest"),
+      ),
+      body: Center(
+        child: FlatButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SecondPage(),
+            ),
+          ),
+          child: Text("Launch SecondPage"),
+        ),
+      ),
+    );
+  }
+}
+
+class SecondPage extends StatefulWidget {
+  @override
+  _SecondPageState createState() => _SecondPageState();
+}
+
+class _SecondPageState extends State<SecondPage> {
   RVPController playerCtrl;
 
   @override
@@ -25,16 +57,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
+  void dispose() {
+    playerCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("VideoPlayerTest"),
-        ),
-        body: RefinedVideoPlayer(
-          controller: playerCtrl,
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("SecondPage"),
+      ),
+      body: RefinedVideoPlayer(
+        controller: playerCtrl,
       ),
     );
   }
