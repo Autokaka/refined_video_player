@@ -27,38 +27,38 @@ class FirstPage extends StatelessWidget {
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SecondPage(),
+              builder: (context) => VideoPage(),
             ),
           ),
-          child: Text("Launch SecondPage"),
+          child: Text("Launch VideoPage"),
         ),
       ),
     );
   }
 }
 
-class SecondPage extends StatefulWidget {
+class VideoPage extends StatefulWidget {
   @override
-  _SecondPageState createState() => _SecondPageState();
+  _VideoPageState createState() => _VideoPageState();
 }
 
-class _SecondPageState extends State<SecondPage> {
-  RVPController playerCtrl;
+class _VideoPageState extends State<VideoPage> {
+  RVPController controller;
 
   @override
   void initState() {
     super.initState();
-    playerCtrl = RVPController(
+    controller = RVPController(
       "https://res.exexm.com/cw_145225549855002",
       onInited: () {
-        playerCtrl.play();
+        controller.play();
       },
     );
   }
 
   @override
   void dispose() {
-    playerCtrl.dispose();
+    controller.dispose();
     super.dispose();
   }
 
@@ -66,10 +66,10 @@ class _SecondPageState extends State<SecondPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("SecondPage"),
+        title: Text("VideoPage"),
       ),
       body: RefinedVideoPlayer(
-        controller: playerCtrl,
+        controller: controller,
       ),
     );
   }
