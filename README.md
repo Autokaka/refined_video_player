@@ -16,7 +16,7 @@ In order to offer the best experience of an application for its users, we need t
 
 ## How does it look like?
 
-<video src="./doc/simple_player_demo.mp4" height="400" width="800"></video>
+![simple_player_demo](doc/simple_player_demo.gif)
 
 ## Simply use it?
 
@@ -63,7 +63,7 @@ For more detailed usage, please refer to the source code. You will see all detai
 
 Please refer to RefinedVideoPlayer params:
 
-![AFA95D4CF28E3B41A82C55979BDDE003](doc/AFA95D4CF28E3B41A82C55979BDDE003.png)
+![params design](doc/params%20design.png)
 
 RefinedVideoPlayer has a default UI, which has been shown in previous video. If you just want to override any area, all you need to do is simply override its AreaBuilder. The following code shows how I managed to override topAreaBuilder and implemented an AppBar in RefinedVideoPlayer. In code:
 
@@ -72,7 +72,7 @@ RefinedVideoPlayer has a default UI, which has been shown in previous video. If 
 
 The following demo shows how this customized player looks like:
 
-<video src="./doc/diy_player_demo.mp4" height="400" width="800"></video>
+![diy_player_demo](doc/diy_player_demo.gif)
 
 Key code:
 

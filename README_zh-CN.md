@@ -16,7 +16,7 @@
 
 ## 效果怎样呢?
 
-<video src="./doc/simple_player_demo.mp4" height="400" width="800"></video>
+![simple_player_demo](doc/simple_player_demo.gif)
 
 ## 给爷"有手就行”的用法
 
@@ -62,7 +62,7 @@ class _VideoPageState extends State<VideoPage> {
 
 RefinedVideoPlayer的属性请参考:
 
-![AFA95D4CF28E3B41A82C55979BDDE003](doc/AFA95D4CF28E3B41A82C55979BDDE003.png)
+![params design](doc/params%20design.png)
 
 RefinedVideoPlayer自带一套默认的UI, 就是视频里面展示的那套. 如果你需要重写任何一个布局, 你只需要重写对应位置的AreaBuilder即可. 下面的代码是一个实现了顶部标题栏的视频播放器案例, 在这套代码里:
 
@@ -71,7 +71,7 @@ RefinedVideoPlayer自带一套默认的UI, 就是视频里面展示的那套. �
 
 实现效果如下:
 
-<video src="./doc/diy_player_demo.mp4" height="400" width="800"></video>
+![diy_player_demo](doc/diy_player_demo.gif)
 
 核心实现代码:
 
