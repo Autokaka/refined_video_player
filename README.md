@@ -12,7 +12,7 @@ If you don’t care about the picture quality of a video, you may never want to 
 
 When playing videos, there exists sharp sawtooth that can be recognized just using our eyes. I tried about 6 kinds of video player packages using native TextureView (from external texture method), including video_player, fijkplayer, flutter_ijk_player, ijk_player, awsome_video_player(based on video_player) and chewie(based on video_player) to support video rendering and finally found that the problems are the same.
 
-In order to offer the best experience of an application for its users, we need to solve this severe problem. Texture and PlatformView are the same in some degrees, but both of them have their own issues. Since I'm not an expert in Flutter developing, I chose a PlatformView way without considering other performance drawbacks. I just want to fix this annoying problem.÷
+In order to offer the best experience of an application for its users, we need to solve this severe problem. Texture and PlatformView are the same in some degrees, but both of them have their own issues. Since I'm not an expert in Flutter developing, I chose a PlatformView way without considering other performance drawbacks. I just want to fix this annoying problem.
 
 ## How does it look like?
 
