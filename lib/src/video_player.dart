@@ -443,10 +443,10 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
               activeTrackColor: Colors.white,
               inactiveTrackColor: Colors.white24,
               thumbColor: Colors.white,
-              thumbShape: RoundSliderThumbShape(
-                enabledThumbRadius: 6,
-                pressedElevation: 10,
-              ),
+              // thumbShape: RoundSliderThumbShape(
+              //   enabledThumbRadius: 6,
+              //   pressedElevation: 10,
+              // ),
               valueIndicatorShape: PaddleSliderValueIndicatorShape(),
               trackHeight: isFullScreen ? 2 : 8,
             ),
