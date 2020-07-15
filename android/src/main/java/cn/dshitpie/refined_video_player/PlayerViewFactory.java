@@ -6,6 +6,7 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -13,17 +14,22 @@ import com.google.android.exoplayer2.analytics.AnalyticsListener;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.dash.DashMediaSource;
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource;
+import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.util.Util;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.StandardMessageCodec;
@@ -45,7 +51,6 @@ public class PlayerViewFactory
     private EventChannel eventChannel;
 
     private SurfaceView surfaceView;
-
     private SimpleExoPlayer exoPlayer;
     private Observable<Long> position;
     private Disposable positionDisposable;
@@ -122,6 +127,38 @@ public class PlayerViewFactory
         );
     }
 
+    private MediaSource getMediaSource(
+            Uri uri, DataSource.Factory dataSourceFactory, Context context) {
+        int type;
+        String formatHint = uri.getLastPathSegment();
+        if (formatHint == null) type = C.TYPE_OTHER;
+        else type = Util.inferContentType(formatHint);
+        switch (type) {
+            case C.TYPE_SS:
+                return new SsMediaSource.Factory(
+                        new DefaultSsChunkSource.Factory(dataSourceFactory),
+                        new DefaultDataSourceFactory(context, null, dataSourceFactory))
+                        .createMediaSource(uri);
+            case C.TYPE_DASH:
+                return new DashMediaSource.Factory(
+                        new DefaultDashChunkSource.Factory(dataSourceFactory),
+                        new DefaultDataSourceFactory(context, null, dataSourceFactory))
+                        .createMediaSource(uri);
+            case C.TYPE_HLS:
+                return new HlsMediaSource
+                        .Factory(dataSourceFactory)
+                        .createMediaSource(uri);
+            case C.TYPE_OTHER:
+                return new ProgressiveMediaSource.Factory(
+                        dataSourceFactory,
+                        new DefaultExtractorsFactory()
+                ).createMediaSource(uri);
+            default: {
+                throw new IllegalStateException("Unsupported type: " + type);
+            }
+        }
+    }
+
     public void onPlayerTimeProcessing() {
         if (position != null) return;
         final HashMap<String, Object> eventObject = new HashMap<>();
@@ -182,10 +219,11 @@ public class PlayerViewFactory
     protected void setMediaSource(String url) {
         Uri uri = Uri.parse(url);
         DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
-        MediaSource mediaSource = new ProgressiveMediaSource.Factory(
+        MediaSource mediaSource = getMediaSource(
+                uri,
                 dataSourceFactory,
-                new DefaultExtractorsFactory()
-        ).createMediaSource(uri);
+                binding.getApplicationContext()
+        );
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
         onPlayerTimeProcessing();

@@ -49,7 +49,8 @@ class _VideoPageState extends State<VideoPage> {
   void initState() {
     super.initState();
     controller = RVPController(
-      "https://res.exexm.com/cw_145225549855002",
+      // "https://res.exexm.com/cw_145225549855002",
+      "https://cdn.jsdelivr.net/gh/myxuwei123/lucky/movie/jingjuegucheng_01.m3u8",
       onInited: () {
         controller.play();
       },
