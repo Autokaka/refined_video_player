@@ -11,11 +11,9 @@ import io.flutter.plugin.common.MethodChannel;
 public class RefinedVideoPlayerPlugin implements FlutterPlugin, MethodChannel.MethodCallHandler {
     private MethodChannel methodChannel;
     private PlayerViewFactory playerViewFactory;
-    private FlutterPluginBinding binding;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
-        this.binding = binding;
         methodChannel = new MethodChannel(binding.getBinaryMessenger(), "refined_video_player/method");
         methodChannel.setMethodCallHandler(this);
         playerViewFactory = new PlayerViewFactory(binding);
