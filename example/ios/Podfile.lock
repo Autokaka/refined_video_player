@@ -1,0 +1,47 @@
+PODS:
+  - auto_orientation (0.0.1):
+    - Flutter
+  - Flutter (1.0.0)
+  - MobileVLCKit (3.3.13)
+  - refined_video_player (0.0.1):
+    - Flutter
+    - MobileVLCKit (~> 3.3.12)
+  - screen (0.0.1):
+    - Flutter
+  - volume_watcher (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - auto_orientation (from `.symlinks/plugins/auto_orientation/ios`)
+  - Flutter (from `Flutter`)
+  - refined_video_player (from `.symlinks/plugins/refined_video_player/ios`)
+  - screen (from `.symlinks/plugins/screen/ios`)
+  - volume_watcher (from `.symlinks/plugins/volume_watcher/ios`)
+
+SPEC REPOS:
+  trunk:
+    - MobileVLCKit
+
+EXTERNAL SOURCES:
+  auto_orientation:
+    :path: ".symlinks/plugins/auto_orientation/ios"
+  Flutter:
+    :path: Flutter
+  refined_video_player:
+    :path: ".symlinks/plugins/refined_video_player/ios"
+  screen:
+    :path: ".symlinks/plugins/screen/ios"
+  volume_watcher:
+    :path: ".symlinks/plugins/volume_watcher/ios"
+
+SPEC CHECKSUMS:
+  auto_orientation: 2941c44ebe5c3d41016001597ab03e81a92a26ce
+  Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
+  MobileVLCKit: 92e1ea43124259417f481c890821efb2399d25e3
+  refined_video_player: 89a89afef986b6477b56da7c9a35dd99d540aa1d
+  screen: abd91ca7bf3426e1cc3646d27e9b2358d6bf07b0
+  volume_watcher: 2f6fd21a69a6e3b4d1c199e28ba0c68f01327332
+
+PODFILE CHECKSUM: b1f7a399522c118a74b177b13c01eca692aa7e6d
+
+COCOAPODS: 1.9.3
