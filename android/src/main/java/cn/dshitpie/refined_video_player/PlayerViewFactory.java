@@ -30,6 +30,7 @@ import com.google.android.exoplayer2.util.Util;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.EventChannel;
 import io.flutter.plugin.common.StandardMessageCodec;
@@ -100,6 +101,9 @@ public class PlayerViewFactory
 
     public void disposePlayer() {
         positionDisposable.dispose();
+        positionDisposable = null;
+        position = null;
+
         exoPlayer.removeAnalyticsListener(this);
         exoPlayer.stop(true);
         exoPlayer.clearVideoSurfaceView(surfaceView);
@@ -160,7 +164,7 @@ public class PlayerViewFactory
     }
 
     public void onPlayerTimeProcessing() {
-        if (position != null) return;
+        if (position != null && positionDisposable != null) return;
         final HashMap<String, Object> eventObject = new HashMap<>();
         position = Observable
                 .interval(1, TimeUnit.SECONDS)
