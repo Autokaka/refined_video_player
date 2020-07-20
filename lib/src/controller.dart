@@ -113,7 +113,7 @@ class RVPController {
             event["speed"] as String,
           );
           if (_position.value.inMilliseconds >=
-              _duration.value.inMilliseconds - 1) {
+              _duration.value.inMilliseconds - 1000) {
             pause().then((_) => _state.value = RVPState.STOPPED);
           }
           _onTimeChanged();

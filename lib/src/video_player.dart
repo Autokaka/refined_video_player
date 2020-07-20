@@ -159,8 +159,14 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     double positionMilliSecChange = (endPosition.x - startPosition.x) /
         MediaQuery.of(context).size.width *
         widget.controller.duration.value.inMilliseconds;
+    int newMilliSec = (currentMilliSec + positionMilliSecChange).toInt();
+    newMilliSec = max(0, newMilliSec);
+    newMilliSec = min(
+      widget.controller.duration.value.inMilliseconds - 1500,
+      newMilliSec,
+    );
     Duration newPosition = Duration(
-      milliseconds: (currentMilliSec + positionMilliSecChange).toInt(),
+      milliseconds: newMilliSec,
     );
 
     if (widget.onGestureChangingPosition != null) {
