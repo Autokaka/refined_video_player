@@ -44,17 +44,23 @@ class VideoPage extends StatefulWidget {
 
 class _VideoPageState extends State<VideoPage> {
   RVPController controller;
+  String url;
 
   @override
   void initState() {
     super.initState();
     controller = RVPController(
-      // "https://res.exexm.com/cw_145225549855002",
-      "https://cdn.jsdelivr.net/gh/myxuwei123/lucky/movie/jingjuegucheng_01.m3u8",
+      url,
       onInited: () {
         controller.play();
       },
     );
+    Future.delayed(Duration(seconds: 3), () {
+      setState(() {
+        url =
+            "https://cdn.jsdelivr.net/gh/myxuwei123/lucky/movie/jingjuegucheng_01.m3u8";
+      });
+    });
   }
 
   @override
@@ -65,6 +71,9 @@ class _VideoPageState extends State<VideoPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (url != controller.url) {
+      controller.setMediaSource(url);
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("VideoPage"),

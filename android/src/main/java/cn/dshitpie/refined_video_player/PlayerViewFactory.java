@@ -2,6 +2,8 @@ package cn.dshitpie.refined_video_player;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
@@ -27,8 +29,14 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import io.flutter.Log;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -220,17 +228,65 @@ public class PlayerViewFactory
     /**
      * Video Player API
      */
-    protected void setMediaSource(String url) {
-        Uri uri = Uri.parse(url);
-        DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
-        MediaSource mediaSource = getMediaSource(
-                uri,
-                dataSourceFactory,
-                binding.getApplicationContext()
-        );
-        exoPlayer.prepare(mediaSource);
-        exoPlayer.setPlayWhenReady(true);
-        onPlayerTimeProcessing();
+    private void sendMsg2Flutter(String messageName, String messageDetail) {
+        HashMap<String, Object> eventObject = new HashMap<>();
+        eventObject.put("name", messageName);
+        eventObject.put("detail", messageDetail);
+        eventSink.success(eventObject);
+    }
+
+    private boolean isUrlValid(String url) {
+        if (url == null || url.isEmpty()) return false;
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            int code = conn.getResponseCode();
+            return (code == 200);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    protected void setMediaSource(final String url) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+                if (!isUrlValid(url)) {
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            sendMsg2Flutter(
+                                    "error",
+                                    "There's something wrong with your media source"
+                            );
+                        }
+                    });
+                    return;
+                }
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Uri uri = Uri.parse(url);
+                            DataSource.Factory dataSourceFactory = getDataSourceFactory(uri);
+                            MediaSource mediaSource = getMediaSource(
+                                    uri,
+                                    dataSourceFactory,
+                                    binding.getApplicationContext()
+                            );
+                            exoPlayer.prepare(mediaSource);
+                            exoPlayer.setPlayWhenReady(true);
+                            onPlayerTimeProcessing();
+                        } catch (Exception e) {
+                            sendMsg2Flutter(
+                                    "error",
+                                    "There's something wrong with your media source"
+                            );
+                        }
+                    }
+                });
+            }
+        }).start();
     }
 
     protected void playVideo() {

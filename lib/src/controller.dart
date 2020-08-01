@@ -4,6 +4,7 @@ enum RVPState {
   PLAYING,
   PAUSED,
   STOPPED,
+  ERROR,
 }
 
 class RVPController {
@@ -41,6 +42,7 @@ class RVPController {
   void Function() _onPaused;
   void Function() _onStopped;
   void Function() _onTimeChanged;
+  void Function(String detail) _onError;
 
   RVPController(
     this.url, {
@@ -49,12 +51,14 @@ class RVPController {
     void Function() onPaused,
     void Function() onStopped,
     void Function() onTimeChanged,
+    void Function(String detail) onError,
   }) {
     _onInited = onInited ?? () {};
     _onPlaying = onPlaying ?? () {};
     _onPaused = onPaused ?? () {};
     _onStopped = onStopped ?? () {};
     _onTimeChanged = onTimeChanged ?? () {};
+    _onError = onError ?? (detail) {};
   }
 
   /// This method can only be executed onPlatformViewCreated.
@@ -88,6 +92,10 @@ class RVPController {
             ).toInt(),
           );
           _onInited();
+          break;
+        case "error":
+          _state.value = RVPState.ERROR;
+          _onError(event["detail"]);
           break;
         case "playing":
           _state.value = RVPState.PLAYING;
@@ -136,6 +144,7 @@ class RVPController {
   }
 
   Future<void> setMediaSource(String url) async {
+    this.url = url;
     await _methodChannel.invokeMethod("setMediaSource", {"url": url});
   }
 
