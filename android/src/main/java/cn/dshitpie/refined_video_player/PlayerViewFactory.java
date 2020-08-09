@@ -108,8 +108,10 @@ public class PlayerViewFactory
     }
 
     public void disposePlayer() {
-        positionDisposable.dispose();
-        positionDisposable = null;
+        if (positionDisposable != null) {
+            positionDisposable.dispose();
+            positionDisposable = null;
+        }
         position = null;
 
         exoPlayer.removeAnalyticsListener(this);

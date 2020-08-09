@@ -64,16 +64,6 @@ class RVPController {
   /// This method can only be executed onPlatformViewCreated.
   /// After that, this method has no use.
   Future<void> _initPlayer(int id) async {
-    if (_isFullScreen.value) {
-      AutoOrientation.landscapeAutoMode();
-      SystemChrome.setEnabledSystemUIOverlays([]);
-    } else {
-      AutoOrientation.portraitUpMode();
-      SystemChrome.setEnabledSystemUIOverlays([
-        SystemUiOverlay.top,
-        SystemUiOverlay.bottom,
-      ]);
-    }
     if (_methodChannel != null) return;
     _methodChannel = MethodChannel("$pluginBase/method");
     _eventChannel = EventChannel("$pluginBase/event");
@@ -224,7 +214,10 @@ class RVPController {
     await Screen.keepOn(onOrNot);
   }
 
-  void setFullScreen(bool wantFullScreen, RefinedVideoPlayer playerInstance) {
+  void setFullScreen(
+    bool wantFullScreen,
+    RefinedVideoPlayer playerInstance,
+  ) {
     if (wantFullScreen == _isFullScreen.value) return;
     _isFullScreen.value = wantFullScreen;
     if (_isFullScreen.value) {

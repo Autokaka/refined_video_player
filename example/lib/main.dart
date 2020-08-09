@@ -44,7 +44,8 @@ class VideoPage extends StatefulWidget {
 
 class _VideoPageState extends State<VideoPage> {
   RVPController controller;
-  String url;
+  String url =
+      "https://cdn.jsdelivr.net/gh/myxuwei123/lucky/movie/jingjuegucheng_01.m3u8";
 
   @override
   void initState() {
@@ -55,10 +56,9 @@ class _VideoPageState extends State<VideoPage> {
         controller.play();
       },
     );
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(Duration(seconds: 10), () {
       setState(() {
-        url =
-            "https://cdn.jsdelivr.net/gh/myxuwei123/lucky/movie/jingjuegucheng_01.m3u8";
+        url = "https://yun.zxziyuan-yun.com/20180221/4C6ivf8O/index.m3u8";
       });
     });
   }

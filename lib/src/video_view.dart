@@ -20,6 +20,16 @@ class _VideoViewState extends State<_VideoView> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     controller = widget.controller;
+    if (controller.isFullScreen.value) {
+      AutoOrientation.landscapeAutoMode();
+      SystemChrome.setEnabledSystemUIOverlays([]);
+    } else {
+      AutoOrientation.portraitUpMode();
+      SystemChrome.setEnabledSystemUIOverlays([
+        SystemUiOverlay.top,
+        SystemUiOverlay.bottom,
+      ]);
+    }
   }
 
   @override
