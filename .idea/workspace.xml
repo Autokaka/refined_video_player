@@ -5,21 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11bfb75f-7dd5-4359-bd35-a07ac3d20255" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Dart_SDK.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/src/main/java/cn/dshitpie/refined_video_player/PlayerViewFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/src/main/java/cn/dshitpie/refined_video_player/PlayerViewFactory.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/example/lib/main.dart" beforeDir="false" afterPath="$PROJECT_DIR$/example/lib/main.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/refined_video_player.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/refined_video_player.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/src/controller.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/controller.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/src/video_view.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/src/video_view.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/refined_video_player.iml" beforeDir="false" afterPath="$PROJECT_DIR$/refined_video_player.iml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CUYDU19710004060" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="Pixel_2_XL_API_29" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -30,6 +25,7 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="dart.analysis.tool.window.force.activate" value="false" />
     <property name="io.flutter.reload.alreadyRun" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />

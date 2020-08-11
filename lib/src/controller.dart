@@ -7,35 +7,24 @@ enum RVPState {
   ERROR,
 }
 
-class RVPController {
+class RVPController with ChangeNotifier {
   static final pluginBase = "refined_video_player";
   MethodChannel _methodChannel;
   EventChannel _eventChannel;
   BuildContext _context;
 
   String url = "";
-  ValueNotifier<bool> _isFullScreen = ValueNotifier(false);
-  ValueNotifier<bool> get isFullScreen => _isFullScreen;
-  ValueNotifier<Size> _size = ValueNotifier(Size(16, 9));
-  ValueNotifier<Size> get size => _size;
-  ValueNotifier<Duration> _duration = ValueNotifier(Duration.zero);
-  ValueNotifier<Duration> get duration => _duration;
-  ValueNotifier<Duration> _position = ValueNotifier(Duration.zero);
-  ValueNotifier<Duration> get position => _position;
-  ValueNotifier<Duration> _initialPosition = ValueNotifier(Duration.zero);
-  ValueNotifier<Duration> get initialPosition => _initialPosition;
-  ValueNotifier<RVPState> _state = ValueNotifier(RVPState.STOPPED);
-  ValueNotifier<RVPState> get state => _state;
-  ValueNotifier<double> _speed = ValueNotifier(1);
-  ValueNotifier<double> get speed => _speed;
-  ValueNotifier<double> _volume = ValueNotifier(0);
-  ValueNotifier<double> get volume => _volume;
-  ValueNotifier<double> _initialVolume = ValueNotifier(0);
-  ValueNotifier<double> get initialVolume => _initialVolume;
-  ValueNotifier<double> _brightness = ValueNotifier(0);
-  ValueNotifier<double> get brightness => _brightness;
-  ValueNotifier<double> _initialBrightness = ValueNotifier(0);
-  ValueNotifier<double> get initialBrightness => _initialBrightness;
+  final ValueNotifier<bool> isFullScreen = ValueNotifier(false);
+  final ValueNotifier<Size> size = ValueNotifier(Size(16, 9));
+  final ValueNotifier<Duration> duration = ValueNotifier(Duration.zero);
+  final ValueNotifier<Duration> position = ValueNotifier(Duration.zero);
+  final ValueNotifier<Duration> initialPosition = ValueNotifier(Duration.zero);
+  final ValueNotifier<RVPState> state = ValueNotifier(RVPState.STOPPED);
+  final ValueNotifier<double> speed = ValueNotifier(1);
+  final ValueNotifier<double> volume = ValueNotifier(0);
+  final ValueNotifier<double> initialVolume = ValueNotifier(0);
+  final ValueNotifier<double> brightness = ValueNotifier(0);
+  final ValueNotifier<double> initialBrightness = ValueNotifier(0);
 
   void Function() _onInited;
   void Function() _onPlaying;
@@ -75,8 +64,8 @@ class RVPController {
             double.parse(event["width"] as String),
             double.parse(event["height"] as String),
           );
-          _size.value = newSize;
-          _duration.value = Duration(
+          size.value = newSize;
+          duration.value = Duration(
             milliseconds: double.parse(
               event["duration"] as String,
             ).toInt(),
@@ -84,35 +73,35 @@ class RVPController {
           _onInited();
           break;
         case "error":
-          _state.value = RVPState.ERROR;
+          state.value = RVPState.ERROR;
           _onError(event["detail"]);
           break;
         case "playing":
-          _state.value = RVPState.PLAYING;
+          state.value = RVPState.PLAYING;
           _onPlaying();
           break;
         case "paused":
-          _state.value = RVPState.PAUSED;
+          state.value = RVPState.PAUSED;
           _onPaused();
           break;
         case "stopped":
-          _state.value = RVPState.STOPPED;
+          state.value = RVPState.STOPPED;
           _onStopped();
           break;
         case "timeChanged":
-          if (_state.value != RVPState.PLAYING) break;
-          _position.value = Duration(
+          if (state.value != RVPState.PLAYING) break;
+          position.value = Duration(
             milliseconds: double.parse(
               event["value"] as String,
             ).toInt(),
           );
-          _initialPosition.value = _position.value;
-          _speed.value = double.parse(
+          initialPosition.value = position.value;
+          speed.value = double.parse(
             event["speed"] as String,
           );
-          if (_position.value.inMilliseconds >=
-              _duration.value.inMilliseconds - 1000) {
-            pause().then((_) => _state.value = RVPState.STOPPED);
+          if (position.value.inMilliseconds >=
+              duration.value.inMilliseconds - 1000) {
+            pause().then((_) => state.value = RVPState.STOPPED);
           }
           _onTimeChanged();
           break;
@@ -121,14 +110,14 @@ class RVPController {
     });
     VolumeWatcher.getCurrentVolume.then(
       (currentVolume) {
-        _volume.value = currentVolume;
-        _initialVolume.value = currentVolume;
+        volume.value = currentVolume;
+        initialVolume.value = currentVolume;
       },
     );
     Screen.brightness.then(
       (currentBrightness) {
-        _brightness.value = currentBrightness;
-        _initialBrightness.value = currentBrightness;
+        brightness.value = currentBrightness;
+        initialBrightness.value = currentBrightness;
       },
     );
   }
@@ -147,13 +136,13 @@ class RVPController {
   }
 
   Future<void> togglePlay() async {
-    if (_state.value == RVPState.STOPPED) return;
-    if (_state.value == RVPState.PLAYING) {
+    if (state.value == RVPState.STOPPED) return;
+    if (state.value == RVPState.PLAYING) {
       await pause();
-      _state.value = RVPState.PAUSED;
+      state.value = RVPState.PAUSED;
     } else {
       await play();
-      _state.value = RVPState.PLAYING;
+      state.value = RVPState.PLAYING;
     }
   }
 
@@ -169,11 +158,24 @@ class RVPController {
       "time": position.inMilliseconds.toString(),
     });
     if (syncInitial) {
-      _initialPosition.value = position;
+      initialPosition.value = position;
     }
   }
 
+  @override
   Future<void> dispose() async {
+    isFullScreen.dispose();
+    size.dispose();
+    duration.dispose();
+    position.dispose();
+    initialPosition.dispose();
+    state.dispose();
+    speed.dispose();
+    volume.dispose();
+    initialVolume.dispose();
+    brightness.dispose();
+    initialBrightness.dispose();
+    super.dispose();
     await _methodChannel.invokeMethod("dispose");
   }
 
@@ -190,9 +192,9 @@ class RVPController {
     if (volume < 0) volume = 0;
     if (volume > 1) volume = 1;
     await VolumeWatcher.setVolume(volume);
-    _volume.value = volume;
+    this.volume.value = volume;
     if (syncInitial) {
-      _initialVolume.value = volume;
+      initialVolume.value = volume;
     }
   }
 
@@ -203,9 +205,9 @@ class RVPController {
     if (brightness < 0) brightness = 0;
     if (brightness > 1) brightness = 1;
     await Screen.setBrightness(brightness);
-    _brightness.value = brightness;
+    this.brightness.value = brightness;
     if (syncInitial) {
-      _initialBrightness.value = brightness;
+      initialBrightness.value = brightness;
     }
   }
 
@@ -218,9 +220,9 @@ class RVPController {
     bool wantFullScreen,
     RefinedVideoPlayer playerInstance,
   ) {
-    if (wantFullScreen == _isFullScreen.value) return;
-    _isFullScreen.value = wantFullScreen;
-    if (_isFullScreen.value) {
+    if (wantFullScreen == isFullScreen.value) return;
+    isFullScreen.value = wantFullScreen;
+    if (isFullScreen.value) {
       Navigator.of(_context).push(
         MaterialPageRoute(
           builder: (_) => playerInstance,
@@ -233,7 +235,7 @@ class RVPController {
 
   void toggleFullScreen(RefinedVideoPlayer playerInstance) {
     setFullScreen(
-      !_isFullScreen.value,
+      !isFullScreen.value,
       playerInstance,
     );
   }

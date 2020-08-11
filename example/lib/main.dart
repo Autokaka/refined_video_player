@@ -50,12 +50,9 @@ class _VideoPageState extends State<VideoPage> {
   @override
   void initState() {
     super.initState();
-    controller = RVPController(
-      url,
-      onInited: () {
-        controller.play();
-      },
-    );
+    controller = RVPController(url, onInited: () {
+      controller.play();
+    });
     Future.delayed(Duration(seconds: 10), () {
       setState(() {
         url = "https://yun.zxziyuan-yun.com/20180221/4C6ivf8O/index.m3u8";
