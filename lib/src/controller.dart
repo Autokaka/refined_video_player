@@ -3,6 +3,7 @@ part of refined_video_player;
 enum RVPState {
   PLAYING,
   PAUSED,
+  BUFFERING,
   STOPPED,
   ERROR,
 }
@@ -13,13 +14,16 @@ class RVPController with ChangeNotifier {
   EventChannel _eventChannel;
   BuildContext _context;
 
-  String url = "";
+  String _url = "";
+  String get url => _url;
+  bool _autoManageAppLifecycle = true;
+  bool get autoManageAppLifecycle => _autoManageAppLifecycle;
   final ValueNotifier<bool> isFullScreen = ValueNotifier(false);
   final ValueNotifier<Size> size = ValueNotifier(Size(16, 9));
   final ValueNotifier<Duration> duration = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> position = ValueNotifier(Duration.zero);
   final ValueNotifier<Duration> initialPosition = ValueNotifier(Duration.zero);
-  final ValueNotifier<RVPState> state = ValueNotifier(RVPState.STOPPED);
+  final ValueNotifier<RVPState> state = ValueNotifier(RVPState.BUFFERING);
   final ValueNotifier<double> speed = ValueNotifier(1);
   final ValueNotifier<double> volume = ValueNotifier(0);
   final ValueNotifier<double> initialVolume = ValueNotifier(0);
@@ -29,22 +33,28 @@ class RVPController with ChangeNotifier {
   void Function() _onInited;
   void Function() _onPlaying;
   void Function() _onPaused;
+  void Function() _onBuffering;
   void Function() _onStopped;
   void Function() _onTimeChanged;
   void Function(String detail) _onError;
 
   RVPController(
-    this.url, {
+    String url, {
+    bool autoManageAppLifecycle,
     void Function() onInited,
     void Function() onPlaying,
     void Function() onPaused,
+    void Function() onBuffering,
     void Function() onStopped,
     void Function() onTimeChanged,
     void Function(String detail) onError,
   }) {
+    _url = url ?? _url;
+    _autoManageAppLifecycle = autoManageAppLifecycle ?? _autoManageAppLifecycle;
     _onInited = onInited ?? () {};
     _onPlaying = onPlaying ?? () {};
     _onPaused = onPaused ?? () {};
+    _onBuffering = onBuffering ?? () {};
     _onStopped = onStopped ?? () {};
     _onTimeChanged = onTimeChanged ?? () {};
     _onError = onError ?? (detail) {};
@@ -81,8 +91,13 @@ class RVPController with ChangeNotifier {
           _onPlaying();
           break;
         case "paused":
+          if (state.value == RVPState.BUFFERING) break;
           state.value = RVPState.PAUSED;
           _onPaused();
+          break;
+        case "buffering":
+          state.value = RVPState.BUFFERING;
+          _onBuffering();
           break;
         case "stopped":
           state.value = RVPState.STOPPED;
@@ -107,6 +122,7 @@ class RVPController with ChangeNotifier {
           break;
         default:
       }
+      notifyListeners();
     });
     VolumeWatcher.getCurrentVolume.then(
       (currentVolume) {
@@ -123,7 +139,7 @@ class RVPController with ChangeNotifier {
   }
 
   Future<void> setMediaSource(String url) async {
-    this.url = url;
+    _url = url;
     await _methodChannel.invokeMethod("setMediaSource", {"url": url});
   }
 
@@ -138,11 +154,11 @@ class RVPController with ChangeNotifier {
   Future<void> togglePlay() async {
     if (state.value == RVPState.STOPPED) return;
     if (state.value == RVPState.PLAYING) {
-      await pause();
       state.value = RVPState.PAUSED;
+      await pause();
     } else {
-      await play();
       state.value = RVPState.PLAYING;
+      await play();
     }
   }
 

@@ -53,11 +53,11 @@ class _VideoPageState extends State<VideoPage> {
     controller = RVPController(url, onInited: () {
       controller.play();
     });
-    Future.delayed(Duration(seconds: 10), () {
-      setState(() {
-        url = "https://yun.zxziyuan-yun.com/20180221/4C6ivf8O/index.m3u8";
-      });
-    });
+    // Future.delayed(Duration(seconds: 10), () {
+    //   setState(() {
+    //     url = "https://yun.zxziyuan-yun.com/20180221/4C6ivf8O/index.m3u8";
+    //   });
+    // });
   }
 
   @override
@@ -68,9 +68,9 @@ class _VideoPageState extends State<VideoPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (url != controller.url) {
-      controller.setMediaSource(url);
-    }
+    // if (url != controller.url) {
+    //   controller.setMediaSource(url);
+    // }
     return Scaffold(
       appBar: AppBar(
         title: Text("VideoPage"),

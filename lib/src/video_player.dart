@@ -42,7 +42,8 @@ class RefinedVideoPlayer extends StatefulWidget {
   _RefinedVideoPlayerState createState() => _RefinedVideoPlayerState();
 }
 
-class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
+class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
+    with WidgetsBindingObserver {
   bool showBottomArea = true;
   bool showRightArea = false;
   String showCenterArea = "loading";
@@ -53,13 +54,53 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.controller.keepScreenOn(true);
+    widget.controller.addListener(() {
+      switch (widget.controller.state.value) {
+        case RVPState.BUFFERING:
+          if (mounted && showCenterArea != "loading") {
+            setState(() {
+              showCenterArea = "loading";
+            });
+          }
+          break;
+        case RVPState.PLAYING:
+          if (mounted && showCenterArea != null) {
+            setState(() {
+              showCenterArea = null;
+            });
+          }
+          break;
+        default:
+      }
+    });
   }
 
   @override
   void dispose() {
     widget.controller.keepScreenOn(false);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!widget.controller.autoManageAppLifecycle) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        widget.controller.play();
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+        widget.controller.pause();
+        break;
+      case AppLifecycleState.detached:
+        widget.controller.stop();
+        break;
+      default:
+    }
   }
 
   bool gestureInvalid(_Position centerPosition) {
@@ -172,7 +213,6 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     if (widget.onGestureChangingPosition != null) {
       widget.onGestureChangingPosition(newPosition);
     } else if (syncInitial) {
-      setState(() => showCenterArea = "loading");
       Future.wait([
         widget.controller.seekTo(newPosition, syncInitial),
         widget.controller.play(),
@@ -313,11 +353,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     return Container(
       width: 150,
       height: MediaQuery.of(context).size.height,
-      color: Colors.black.withOpacity(0.65),
-      margin: EdgeInsets.only(
-        top: 30,
-      ),
-      padding: EdgeInsets.fromLTRB(45, 10, 0, 110),
+      color: Colors.black.withOpacity(0.7),
+      padding: EdgeInsets.fromLTRB(45, 45, 0, 85),
       child: ValueListenableBuilder<double>(
         valueListenable: widget.controller.speed,
         builder: (context, speed, child) {
@@ -414,6 +451,10 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
               iconData = Icons.play_arrow;
               onPressed = widget.controller.play;
               break;
+            case RVPState.BUFFERING:
+              iconData = Icons.arrow_circle_down_outlined;
+              onPressed = () async {};
+              break;
             default:
           }
           return IconButton(
@@ -428,63 +469,72 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
     }
 
     Widget buildProgressBar(bool isFullScreen) {
-      Widget childWidget = ValueListenableBuilder<Duration>(
-        valueListenable: widget.controller.position,
-        builder: (context, position, child) {
-          if (widget.controller.duration.value == Duration.zero) {
-            return Center(
-              child: Text(
-                "Loading... =ω=",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          }
-          return SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Colors.white,
-              inactiveTrackColor: Colors.white24,
-              thumbColor: Colors.white,
-              thumbShape: RoundSliderThumbShape(
-                enabledThumbRadius: 6,
-                pressedElevation: 10,
-              ),
-              valueIndicatorShape: PaddleSliderValueIndicatorShape(),
-              trackHeight: isFullScreen ? 2 : 8,
-            ),
-            child: Slider(
-              max: widget.controller.duration.value.inMilliseconds.toDouble(),
-              value: position.inMilliseconds.toDouble(),
-              label: dur2Str(position),
-              divisions: widget.controller.duration.value.inMilliseconds,
-              onChangeStart: (startValue) {
-                widget.controller.pause();
-              },
-              onChanged: (newValue) {
-                widget.controller.position.value = Duration(
-                  milliseconds: newValue.toInt(),
-                );
-              },
-              onChangeEnd: (newValue) {
-                setState(() {
-                  showCenterArea = "loading";
-                  widget.controller.position.value = Duration(
-                    milliseconds: newValue.toInt(),
-                  );
-                });
-
-                Future.wait([
-                  widget.controller.seekTo(
-                    Duration(milliseconds: newValue.toInt()),
+      Widget childWidget = ValueListenableBuilder<RVPState>(
+        valueListenable: widget.controller.state,
+        builder: (context, state, child) {
+          return ValueListenableBuilder<Duration>(
+            valueListenable: widget.controller.position,
+            builder: (context, position, child) {
+              if (state == RVPState.BUFFERING ||
+                  widget.controller.duration.value == Duration.zero) {
+                return Offstage(
+                  offstage: isFullScreen,
+                  child: Center(
+                    child: Text(
+                      "Loading... =ω=",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  widget.controller.play(),
-                ]);
-              },
-            ),
+                );
+              }
+              return SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: Colors.white,
+                  inactiveTrackColor: Colors.white24,
+                  thumbColor: Colors.white,
+                  thumbShape: RoundSliderThumbShape(
+                    enabledThumbRadius: 6,
+                    pressedElevation: 10,
+                  ),
+                  valueIndicatorShape: PaddleSliderValueIndicatorShape(),
+                  trackHeight: isFullScreen ? 2 : 8,
+                ),
+                child: Slider(
+                  max: widget.controller.duration.value.inMilliseconds
+                      .toDouble(),
+                  value: position.inMilliseconds.toDouble(),
+                  label: dur2Str(position),
+                  divisions: widget.controller.duration.value.inMilliseconds,
+                  onChangeStart: (startValue) {
+                    widget.controller.pause();
+                  },
+                  onChanged: (newValue) {
+                    widget.controller.position.value = Duration(
+                      milliseconds: newValue.toInt(),
+                    );
+                  },
+                  onChangeEnd: (newValue) {
+                    setState(() {
+                      widget.controller.position.value = Duration(
+                        milliseconds: newValue.toInt(),
+                      );
+                    });
+
+                    Future.wait([
+                      widget.controller.seekTo(
+                        Duration(milliseconds: newValue.toInt()),
+                      ),
+                      widget.controller.play(),
+                    ]);
+                  },
+                ),
+              );
+            },
           );
         },
       );
@@ -498,21 +548,29 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       return Expanded(child: childWidget);
     }
 
-    Widget buildProgressLabel() {
+    Widget buildProgressLabel(bool isFullScreen) {
       return ValueListenableBuilder<Duration>(
         valueListenable: widget.controller.position,
         builder: (context, position, child) {
-          return FlatButton(
-            child: Text(
-              "${dur2Str(position)}/${dur2Str(widget.controller.duration.value)}",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            onPressed: () {},
+          return ValueListenableBuilder<RVPState>(
+            valueListenable: widget.controller.state,
+            builder: (context, state, child) {
+              return FlatButton(
+                child: Text(
+                  isFullScreen && state == RVPState.BUFFERING
+                      ? "Loading... =ω="
+                      : "${dur2Str(position)}/"
+                          "${dur2Str(widget.controller.duration.value)}",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onPressed: () {},
+              );
+            },
           );
         },
       );
@@ -583,7 +641,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
                 children: [
                   buildPlayPauseButton(),
                   isFullScreen ? Container() : buildProgressBar(isFullScreen),
-                  buildProgressLabel(),
+                  buildProgressLabel(isFullScreen),
                   buildDivider(isFullScreen),
                   buildSpeedButton(isFullScreen),
                   buildScreenButton(),
@@ -601,38 +659,29 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
       return widget.centerAreaBuilder();
     }
     Widget buildLoadingPanel() {
-      return ValueListenableBuilder(
-        valueListenable: widget.controller.state,
-        builder: (context, state, child) {
-          if (state == RVPState.PLAYING) {
-            Future.delayed(Duration(milliseconds: 500)).then((value) {
-              setState(() => showCenterArea = null);
-            });
-          }
-          return Container(
-            height: 80,
-            width: 80,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(10),
+      return Container(
+        height: 80,
+        width: 80,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SizedBox(
+          height: 40,
+          width: 40,
+          child: CircularProgressIndicator(
+            strokeWidth: 5,
+            valueColor: AlwaysStoppedAnimation(
+              Colors.white,
             ),
-            child: SizedBox(
-              height: 40,
-              width: 40,
-              child: CircularProgressIndicator(
-                strokeWidth: 5,
-                valueColor: AlwaysStoppedAnimation(
-                  Colors.white,
-                ),
-              ),
-            ),
-          );
-        },
+          ),
+        ),
       );
     }
 
     Widget buildIndicator(String title, double value) {
+      int percent = (double.tryParse(value.toStringAsFixed(2)) * 100).toInt();
       return Container(
         height: 80,
         width: 80,
@@ -651,7 +700,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
                   width: 40,
                   alignment: Alignment.center,
                   child: Text(
-                    value.toStringAsFixed(2),
+                    "$percent%",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w500,
@@ -664,6 +713,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer> {
                   child: CircularProgressIndicator(
                     value: value,
                     strokeWidth: 5,
+                    backgroundColor: Colors.white12,
                     valueColor: AlwaysStoppedAnimation(
                       Colors.white,
                     ),

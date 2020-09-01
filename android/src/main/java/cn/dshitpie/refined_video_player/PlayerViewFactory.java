@@ -199,8 +199,14 @@ public class PlayerViewFactory
     @Override
     public void onPlayerStateChanged(EventTime eventTime, boolean playWhenReady, int playbackState) {
         HashMap<String, Object> eventObject = new HashMap<>();
-        if (playbackState == Player.STATE_ENDED) {
-            eventObject.put("name", "ended");
+        switch(playbackState) {
+            case Player.STATE_ENDED:
+                eventObject.put("name", "ended");
+                break;
+            case Player.STATE_BUFFERING:
+                eventObject.put("name", "buffering");
+                break;
+            default:
         }
         if (eventObject.isEmpty()) return;
         eventSink.success(eventObject);

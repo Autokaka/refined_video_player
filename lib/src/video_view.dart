@@ -16,9 +16,8 @@ class _VideoViewState extends State<_VideoView> {
   MethodChannel methodChannel;
   RVPController controller;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void applyController(BuildContext context) {
+    if (controller == widget.controller) return;
     controller = widget.controller;
     if (controller.isFullScreen.value) {
       AutoOrientation.landscapeAutoMode();
@@ -30,11 +29,12 @@ class _VideoViewState extends State<_VideoView> {
         SystemUiOverlay.bottom,
       ]);
     }
+    controller._context = context;
   }
 
   @override
   Widget build(BuildContext context) {
-    controller._context = context;
+    applyController(context);
     return ValueListenableBuilder<Size>(
       valueListenable: controller.size,
       builder: (context, size, child) {
