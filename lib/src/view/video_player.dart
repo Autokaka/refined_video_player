@@ -11,11 +11,8 @@ class _Position {
 
 class RefinedVideoPlayer extends StatefulWidget {
   final RVPController controller;
-  final Widget Function() leftAreaBuilder;
-  final Widget Function() topAreaBuilder;
-  final Widget Function() rightAreaBuilder;
-  final Widget Function() bottomAreaBuilder;
-  final Widget Function() centerAreaBuilder;
+  final RVPUIBuilder uiBuilder;
+  final RVPUIModifier uiModifier;
 
   final void Function(double newVolume) onGestureChangingVolume;
   final void Function(double newBrightness) onGestureChangingBrightness;
@@ -23,14 +20,11 @@ class RefinedVideoPlayer extends StatefulWidget {
   final void Function() onGestureDoubleTap;
   final void Function() onGestureTap;
 
-  RefinedVideoPlayer({
+  const RefinedVideoPlayer({
     Key key,
     @required this.controller,
-    this.leftAreaBuilder,
-    this.topAreaBuilder,
-    this.rightAreaBuilder,
-    this.bottomAreaBuilder,
-    this.centerAreaBuilder,
+    this.uiBuilder = const RVPUIBuilder(),
+    this.uiModifier = const RVPUIModifier(),
     this.onGestureChangingVolume,
     this.onGestureChangingBrightness,
     this.onGestureChangingPosition,
@@ -200,6 +194,9 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
     double positionMilliSecChange = (endPosition.x - startPosition.x) /
         MediaQuery.of(context).size.width *
         widget.controller.duration.value.inMilliseconds;
+    if (widget.controller.isFullScreen.value) {
+      positionMilliSecChange /= 10;
+    }
     int newMilliSec = (currentMilliSec + positionMilliSecChange).toInt();
     newMilliSec = max(0, newMilliSec);
     newMilliSec = min(
@@ -331,29 +328,31 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
   }
 
   Widget buildLeftArea() {
-    if (widget.leftAreaBuilder != null) {
-      return widget.rightAreaBuilder();
+    if (widget.uiBuilder.leftAreaBuilder != null) {
+      return widget.uiBuilder.rightAreaBuilder();
     }
     return Container();
   }
 
   Widget buildTopArea() {
-    if (widget.topAreaBuilder != null) {
-      return widget.topAreaBuilder();
+    if (widget.uiBuilder.topAreaBuilder != null) {
+      return widget.uiBuilder.topAreaBuilder();
     }
     return Container();
   }
 
   Widget buildRightArea() {
-    if (widget.rightAreaBuilder != null) {
-      return widget.rightAreaBuilder();
+    if (widget.uiBuilder.rightAreaBuilder != null) {
+      return widget.uiBuilder.rightAreaBuilder();
     }
     if (!showRightArea) return Container();
 
     return Container(
-      width: 150,
-      height: MediaQuery.of(context).size.height,
-      color: Colors.black.withOpacity(0.7),
+      width: widget.uiModifier.right.width,
+      height:
+          widget.uiModifier.right.height ?? MediaQuery.of(context).size.height,
+      color: widget.uiModifier.right.backgroundColor ??
+          Colors.black.withOpacity(0.7),
       padding: EdgeInsets.fromLTRB(45, 45, 0, 85),
       child: ValueListenableBuilder<double>(
         valueListenable: widget.controller.speed,
@@ -361,68 +360,24 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
           return Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GestureDetector(
+            children: List.generate(widget.uiModifier.right.speedList.length,
+                (index) {
+              return GestureDetector(
                 child: Text(
-                  "X2.0",
-                  style: TextStyle(
-                    color: speed == 2.0 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  widget.uiModifier.right.speedList[index] == 1
+                      ? "原速"
+                      : "X${widget.uiModifier.right.speedList[index].toStringAsFixed(1)}",
+                  style: speed == widget.uiModifier.right.speedList[index]
+                      ? widget.uiModifier.right.selectedTextStyle.copyWith(
+                          color: widget.uiModifier.right.primaryColor,
+                        )
+                      : widget.uiModifier.right.unSelectedTextStyle,
                 ),
-                onTap: () => widget.controller.setSpeed(2.0),
-              ),
-              GestureDetector(
-                child: Text(
-                  "X1.75",
-                  style: TextStyle(
-                    color: speed == 1.75 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
+                onTap: () => widget.controller.setSpeed(
+                  widget.uiModifier.right.speedList[index],
                 ),
-                onTap: () => widget.controller.setSpeed(1.75),
-              ),
-              GestureDetector(
-                child: Text(
-                  "X1.5",
-                  style: TextStyle(
-                    color: speed == 1.5 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => widget.controller.setSpeed(1.5),
-              ),
-              GestureDetector(
-                child: Text(
-                  "X1.25",
-                  style: TextStyle(
-                    color: speed == 1.25 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => widget.controller.setSpeed(1.25),
-              ),
-              GestureDetector(
-                child: Text(
-                  "原速",
-                  style: TextStyle(
-                    color: speed == 1.0 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => widget.controller.setSpeed(1.0),
-              ),
-              GestureDetector(
-                child: Text(
-                  "X0.5",
-                  style: TextStyle(
-                    color: speed == 0.5 ? Colors.blue : Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                onTap: () => widget.controller.setSpeed(0.5),
-              ),
-            ],
+              );
+            }),
           );
         },
       ),
@@ -430,8 +385,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
   }
 
   Widget buildBottomArea() {
-    if (widget.bottomAreaBuilder != null) {
-      return widget.bottomAreaBuilder();
+    if (widget.uiBuilder.bottomAreaBuilder != null) {
+      return widget.uiBuilder.bottomAreaBuilder();
     }
     if (!showBottomArea) return Container();
 
@@ -439,29 +394,25 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
       return ValueListenableBuilder<RVPState>(
         valueListenable: widget.controller.state,
         builder: (context, state, child) {
-          IconData iconData;
+          Icon icon;
           Future<void> Function() onPressed;
           switch (state) {
             case RVPState.PLAYING:
-              iconData = Icons.pause;
+              icon = widget.uiModifier.bottom.pauseIcon;
               onPressed = widget.controller.pause;
               break;
             case RVPState.PAUSED:
             case RVPState.STOPPED:
-              iconData = Icons.play_arrow;
+              icon = widget.uiModifier.bottom.playIcon;
               onPressed = widget.controller.play;
               break;
             case RVPState.BUFFERING:
-              iconData = Icons.arrow_circle_down_outlined;
-              onPressed = () async {};
-              break;
             default:
+              icon = widget.uiModifier.bottom.loadingIcon;
+              onPressed = () async {};
           }
           return IconButton(
-            icon: Icon(
-              iconData,
-              color: Colors.white,
-            ),
+            icon: icon,
             onPressed: onPressed,
           );
         },
@@ -479,61 +430,66 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
                   widget.controller.duration.value == Duration.zero) {
                 return Offstage(
                   offstage: isFullScreen,
-                  child: Center(
-                    child: Text(
-                      "Loading... =ω=",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
+                  child: widget.uiModifier.bottom.loadingWidget ??
+                      Center(
+                        child: Text(
+                          widget.uiModifier.bottom.loadingText,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
                 );
               }
-              return SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: Colors.white,
-                  inactiveTrackColor: Colors.white24,
-                  thumbColor: Colors.white,
-                  thumbShape: RoundSliderThumbShape(
-                    enabledThumbRadius: 6,
-                    pressedElevation: 10,
-                  ),
-                  valueIndicatorShape: PaddleSliderValueIndicatorShape(),
-                  trackHeight: isFullScreen ? 2 : 8,
-                ),
-                child: Slider(
-                  max: widget.controller.duration.value.inMilliseconds
-                      .toDouble(),
-                  value: position.inMilliseconds.toDouble(),
-                  label: dur2Str(position),
-                  divisions: widget.controller.duration.value.inMilliseconds,
-                  onChangeStart: (startValue) {
-                    widget.controller.pause();
-                  },
-                  onChanged: (newValue) {
-                    widget.controller.position.value = Duration(
-                      milliseconds: newValue.toInt(),
-                    );
-                  },
-                  onChangeEnd: (newValue) {
-                    setState(() {
-                      widget.controller.position.value = Duration(
-                        milliseconds: newValue.toInt(),
-                      );
-                    });
+              return widget.uiModifier.bottom.sliderWidget ??
+                  SliderTheme(
+                    data: widget.uiModifier.bottom.sliderThemeData ??
+                        SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.white,
+                          inactiveTrackColor: Colors.white24,
+                          thumbColor: Colors.white,
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 6,
+                            pressedElevation: 10,
+                          ),
+                          valueIndicatorShape:
+                              PaddleSliderValueIndicatorShape(),
+                          trackHeight: isFullScreen ? 2 : 8,
+                        ),
+                    child: Slider(
+                      max: widget.controller.duration.value.inMilliseconds
+                          .toDouble(),
+                      value: position.inMilliseconds.toDouble(),
+                      label: dur2Str(position),
+                      divisions:
+                          widget.controller.duration.value.inMilliseconds,
+                      onChangeStart: (startValue) {
+                        widget.controller.pause();
+                      },
+                      onChanged: (newValue) {
+                        widget.controller.position.value = Duration(
+                          milliseconds: newValue.toInt(),
+                        );
+                      },
+                      onChangeEnd: (newValue) {
+                        setState(() {
+                          widget.controller.position.value = Duration(
+                            milliseconds: newValue.toInt(),
+                          );
+                        });
 
-                    Future.wait([
-                      widget.controller.seekTo(
-                        Duration(milliseconds: newValue.toInt()),
-                      ),
-                      widget.controller.play(),
-                    ]);
-                  },
-                ),
-              );
+                        Future.wait([
+                          widget.controller.seekTo(
+                            Duration(milliseconds: newValue.toInt()),
+                          ),
+                          widget.controller.play(),
+                        ]);
+                      },
+                    ),
+                  );
             },
           );
         },
@@ -556,18 +512,20 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
             valueListenable: widget.controller.state,
             builder: (context, state, child) {
               return FlatButton(
-                child: Text(
-                  isFullScreen && state == RVPState.BUFFERING
-                      ? "Loading... =ω="
-                      : "${dur2Str(position)}/"
-                          "${dur2Str(widget.controller.duration.value)}",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: widget.uiModifier.bottom.loadingWidget ??
+                    Text(
+                      isFullScreen && state == RVPState.BUFFERING
+                          ? widget.uiModifier.bottom.loadingText ??
+                              "Loading... =ω="
+                          : "${dur2Str(position)}/"
+                              "${dur2Str(widget.controller.duration.value)}",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 onPressed: () {},
               );
             },
@@ -581,11 +539,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
       return FlatButton(
         padding: EdgeInsets.zero,
         child: Text(
-          "倍速",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
+          widget.uiModifier.bottom.speedText,
+          style: widget.uiModifier.bottom.speedTextStyle,
         ),
         onPressed: () => setState(() => showRightArea = !showRightArea),
       );
@@ -605,10 +560,9 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
         valueListenable: widget.controller.isFullScreen,
         builder: (context, isFullScreen, child) {
           return IconButton(
-            icon: Icon(
-              isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
-              color: Colors.white,
-            ),
+            icon: isFullScreen
+                ? widget.uiModifier.bottom.exitFullScreenIcon
+                : widget.uiModifier.bottom.fullScreenIcon,
             onPressed: () => widget.controller.toggleFullScreen(widget),
           );
         },
@@ -620,17 +574,8 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
       builder: (context, isFullScreen, child) {
         return Container(
           width: MediaQuery.of(context).size.width,
-          height: isFullScreen ? 80 : 70,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black,
-              ],
-            ),
-          ),
+          height: widget.uiModifier.bottom.height ?? (isFullScreen ? 80 : 70),
+          decoration: widget.uiModifier.bottom.decoration,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -655,27 +600,29 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
   }
 
   Widget buildCenterArea() {
-    if (widget.centerAreaBuilder != null) {
-      return widget.centerAreaBuilder();
+    if (widget.uiBuilder.centerAreaBuilder != null) {
+      return widget.uiBuilder.centerAreaBuilder();
     }
     Widget buildLoadingPanel() {
       return Container(
         height: 80,
         width: 80,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: widget.uiModifier.center.loadingDecoration ??
+            BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(10),
+            ),
         child: SizedBox(
           height: 40,
           width: 40,
-          child: CircularProgressIndicator(
-            strokeWidth: 5,
-            valueColor: AlwaysStoppedAnimation(
-              Colors.white,
-            ),
-          ),
+          child: widget.uiModifier.center.loadingIndicatorWidget ??
+              CircularProgressIndicator(
+                strokeWidth: 5,
+                valueColor: AlwaysStoppedAnimation(
+                  Colors.white,
+                ),
+              ),
         ),
       );
     }
@@ -686,10 +633,11 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
         height: 80,
         width: 80,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: widget.uiModifier.center.indicatorDecoration ??
+            BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(10),
+            ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -701,23 +649,22 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
                   alignment: Alignment.center,
                   child: Text(
                     "$percent%",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: widget.uiModifier.center.percentTextStyle,
                   ),
                 ),
                 SizedBox(
                   height: 40,
                   width: 40,
-                  child: CircularProgressIndicator(
-                    value: value,
-                    strokeWidth: 5,
-                    backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation(
-                      Colors.white,
-                    ),
-                  ),
+                  child: widget.uiModifier.center.indicatorBuilder != null
+                      ? widget.uiModifier.center.indicatorBuilder(value)
+                      : CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 5,
+                          backgroundColor: Colors.white12,
+                          valueColor: AlwaysStoppedAnimation(
+                            Colors.white,
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -725,11 +672,12 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
               margin: EdgeInsets.only(top: 5),
               child: Text(
                 title,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
+                style: widget.uiModifier.center.titleTextStyle ??
+                    TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                    ),
               ),
             ),
           ],
@@ -760,19 +708,17 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
         height: 60,
         width: 120,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
-          borderRadius: BorderRadius.circular(10),
-        ),
+        decoration: widget.uiModifier.center.videoProgressDecoration ??
+            BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(10),
+            ),
         child: ValueListenableBuilder<Duration>(
           valueListenable: widget.controller.position,
           builder: (context, position, child) {
             return Text(
               "${dur2Str(position)}/${dur2Str(widget.controller.duration.value)}",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
+              style: widget.uiModifier.center.videoProgressTextStyle,
             );
           },
         ),
