@@ -511,7 +511,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
           return ValueListenableBuilder<RVPState>(
             valueListenable: widget.controller.state,
             builder: (context, state, child) {
-              return FlatButton(
+              return TextButton(
                 child: widget.uiModifier.bottom.loadingWidget ??
                     Text(
                       isFullScreen && state == RVPState.BUFFERING
@@ -536,8 +536,7 @@ class _RefinedVideoPlayerState extends State<RefinedVideoPlayer>
 
     Widget buildSpeedButton(bool isFullScreen) {
       if (!isFullScreen) return Container();
-      return FlatButton(
-        padding: EdgeInsets.zero,
+      return TextButton(
         child: Text(
           widget.uiModifier.bottom.speedText,
           style: widget.uiModifier.bottom.speedTextStyle,

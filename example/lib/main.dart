@@ -23,7 +23,7 @@ class FirstPage extends StatelessWidget {
         title: Text("VideoPlayerTest"),
       ),
       body: Center(
-        child: FlatButton(
+        child: TextButton(
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
